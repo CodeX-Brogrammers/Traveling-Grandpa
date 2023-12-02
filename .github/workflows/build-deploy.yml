@@ -36,6 +36,7 @@ jobs:
           tags: ${{ env.REGISTRY_URL }}:grandpa-${{ steps.vars.outputs.short_sha }}
 
   deploy:
+    name: Deploy to server
     needs: publish
     runs-on: ubuntu-latest
     steps:
