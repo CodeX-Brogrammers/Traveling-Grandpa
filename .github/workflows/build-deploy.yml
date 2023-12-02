@@ -32,7 +32,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ env.REGISTRY_URL }}:lecture-${{ steps.vars.outputs.short_sha }}
+          tags: ${{ env.REGISTRY_URL }}:grandpa-${{ steps.vars.outputs.short_sha }}
 
 
       - name: install ssh keys
@@ -42,7 +42,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} > ~/.ssh/known_hosts
 
       - name: connect and pull
-        run: ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "export REGISTRY_URL=${{ env.REGISTRY_URL }} && export REGISTRY_TAG=lecture-${{ steps.vars.outputs.short_sha }} && cd ${{ secrets.WORK_DIR }} && docker-compose -f hub.docker-compose.yaml pull && docker-compose -f hub.docker-compose.yaml up -d && exit"
+        run: ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "export REGISTRY_URL=${{ env.REGISTRY_URL }} && export REGISTRY_TAG=grandpa-${{ steps.vars.outputs.short_sha }} && cd ${{ secrets.WORK_DIR }} && docker-compose -f hub.docker-compose.yaml pull && docker-compose -f hub.docker-compose.yaml up -d && exit"
         
       - name: cleanup
         run: rm -rf ~/.ssh
