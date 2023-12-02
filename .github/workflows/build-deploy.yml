@@ -1,0 +1,48 @@
+name: Build docker image and deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  REGISTRY_URL: ${{ secrets.DOCKER_NAMESPACE }}/${{ secrets.DOCKER_REPOSITORY }}
+  
+jobs:
+  publish:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        
+      - name: Set short git commit SHA
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT
+          
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY_URL }}:lecture-${{ steps.vars.outputs.short_sha }}
+
+
+      - name: install ssh keys
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_ed25519
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} > ~/.ssh/known_hosts
+
+      - name: connect and pull
+        run: ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "export REGISTRY_URL=${{ env.REGISTRY_URL }} && export REGISTRY_TAG=lecture-${{ steps.vars.outputs.short_sha }} && cd ${{ secrets.WORK_DIR }} && docker-compose -f hub.docker-compose.yaml pull && docker-compose -f hub.docker-compose.yaml up -d && exit"
+        
+      - name: cleanup
+        run: rm -rf ~/.ssh
