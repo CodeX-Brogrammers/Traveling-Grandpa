@@ -11,13 +11,14 @@ jobs:
   publish:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
-
+    outputs:
+      short_sha: ${{ steps.vars.outputs.short_sha }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
         
       - name: Set short git commit SHA
-        id: vars
+        id: short_sha
         run: echo "short_sha=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT
           
       - name: Log in to Docker Hub
@@ -34,7 +35,10 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY_URL }}:grandpa-${{ steps.vars.outputs.short_sha }}
 
-
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
       - name: install ssh keys
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_ed25519
@@ -42,7 +46,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} > ~/.ssh/known_hosts
 
       - name: connect and pull
-        run: ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "export REGISTRY_URL=${{ env.REGISTRY_URL }} && export REGISTRY_TAG=grandpa-${{ steps.vars.outputs.short_sha }} && cd ${{ secrets.WORK_DIR }} && docker-compose -f hub.docker-compose.yaml pull && docker-compose -f hub.docker-compose.yaml up -d && exit"
+        run: ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "export REGISTRY_URL=${{ env.REGISTRY_URL }} && export REGISTRY_TAG=grandpa-${{ needs.publish.outputs.short_sha }} && cd ${{ secrets.WORK_DIR }} && docker-compose -f hub.docker-compose.yaml pull && docker-compose -f hub.docker-compose.yaml up -d && exit"
         
       - name: cleanup
         run: rm -rf ~/.ssh
