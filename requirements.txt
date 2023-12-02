@@ -1,0 +1,4 @@
+aioAlice==1.5.1
+beanie==1.23.6
+pydantic-settings==2.1.0
+pymorphy2 @ git+https://github.com/pymorphy2-fork/pymorphy2@master

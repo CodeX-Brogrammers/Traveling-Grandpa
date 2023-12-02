@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app:
+    image: '${REGISTRY_URL}:${REGISTRY_TAG}'
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - URL_PATH=${URL_PATH}
+    ports:
+      - '${PORT}:3000'
+
+  mongodb:
+    image: mongo:6.0.12
+    restart: unless-stopped
+    volumes:
+      - ./data/mongo:/data/db
+    ports:
+      - '${MONGODB_EXTERNAL_PORT}:27017'
