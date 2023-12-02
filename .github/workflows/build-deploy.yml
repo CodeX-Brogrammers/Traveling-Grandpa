@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Set short git commit SHA
-        id: short_sha
+        id: vars
         run: echo "short_sha=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT
           
       - name: Log in to Docker Hub
