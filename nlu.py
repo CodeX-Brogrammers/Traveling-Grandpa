@@ -83,6 +83,7 @@ def remove_common_words(text_tokens: list[str], words: set[str]) -> list[str]:
 
 
 def remove_common_words_from_answers(answers: list[tuple[int, str]]) -> list[CleanAnswer]:
+    """TODO: Перенести этот метод из модули nlu в другой модуль."""
     common_answers_words = find_common_words([value[1] for value in answers])
     result = []
     for answer in answers:
@@ -100,6 +101,7 @@ def remove_common_words_from_answers(answers: list[tuple[int, str]]) -> list[Cle
 
 def calculate_correct_answer_by_number(
         user_answer: str, answers: list[CleanAnswer], threshold: float = 0.33) -> list[Diff]:
+    """TODO: Перенести этот метод из модули nlu в другой модуль."""
     result = []
     normalize_user_answer = set(lemmatize(tokenizer(user_answer)))
     for answer in answers:
@@ -119,6 +121,7 @@ def calculate_correct_answer_by_number(
 
 def calculate_correct_answer_by_text(
         user_answer: str, answers: list[CleanAnswer], threshold: float = 0.33) -> list[Diff]:
+    """TODO: Перенести этот метод из модули nlu в другой модуль."""
     result = []
     normalize_user_answer = set(lemmatize(tokenizer(user_answer)))
     for answer in answers:
@@ -137,6 +140,7 @@ def calculate_correct_answer_by_text(
 
 
 def clean_user_command(command: str, answers: list[CleanAnswer]) -> str:
+    """TODO: Перенести этот метод из модули nlu в другой модуль."""
     user_answer_tokens = lemmatize(tokenizer(command))
     common_answers_words = find_common_words([answer.src for answer in answers])
     result = remove_common_words(user_answer_tokens, common_answers_words)
@@ -165,6 +169,14 @@ def clean_user_command(command: str, answers: list[CleanAnswer]) -> str:
 
 
 def check_user_answer(alice: AliceRequest) -> Union[UserCheck, list[Diff]]:
+    """
+    TODO: Перенести этот метод из модули nlu в другой модуль.
+    TODO: Требуется изменить работу метода:
+    Будет удобно если можно будет в него пердовать нужные обработчики списком
+    Handler:
+        condition (Метод проверки): условие срабатывание обработчика
+        callback (__call__(AliceRequest)): функция обработки
+    """
     state = State.from_request(alice)
     if alice.request.type == "ButtonPressed":
         logging.info(f"Answer button clicked")
@@ -210,7 +222,6 @@ def check_user_answer(alice: AliceRequest) -> Union[UserCheck, list[Diff]]:
         return diffs
 
     return UserCheck()
-
 
 
 @lru_cache()
