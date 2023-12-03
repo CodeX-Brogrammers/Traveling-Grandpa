@@ -24,6 +24,11 @@ def tokenizer(text: str) -> list[str]:
 def calculate_coincidence(
         input_tokens: Union[set[str], list[str]],
         source_tokens: Union[set[str], list[str]]) -> float:
+    """
+    Эта функция предназначена для вычисления коэффициента совпадения между двумя наборами токенов.
+    Она принимает два набора токенов (input_tokens и source_tokens)
+    и возвращает число от 0.0 до 1.0, обозначающее коэффициент совпадения.
+    """
     if isinstance(input_tokens, list):
         input_tokens = set(input_tokens)
     if isinstance(source_tokens, list):
