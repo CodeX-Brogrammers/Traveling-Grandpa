@@ -31,8 +31,13 @@ def mixin_can_repeat(dp: Dispatcher, key: RepeatKey = None):
 def mixin_state(func: Callable):
     @wraps(func)
     async def wrapper(alice: AliceRequest, *args, **kwargs):
-        state = State.from_request(alice)
-        data = await func(alice, *args, state=state, **kwargs)
+        if kwargs.get("state", None) is None:
+            state = State.from_request(alice)
+            kwargs["state"] = state
+        else:
+            state = kwargs["state"]
+
+        data = await func(alice, *args, **kwargs)
         if isinstance(data, dict):
             temp = data.copy()
             temp.pop("analytics")
