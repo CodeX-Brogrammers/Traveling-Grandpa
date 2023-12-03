@@ -32,26 +32,24 @@ POSSIBLE_ANSWER = ("Начинаем ?", "Готовы начать ?", "Пое�
 CONTINUE_ANSWER = ("Продолжим ?", "Едем дальше ?")
 FACT_ANSWER = ("Хотите послушать интересный факт ?",)
 
-CARDS = (
+CARDS = [
     Image(
         image_id="997614/d1a030478031816bf0a3",
-        title=None,
-        description=None,
-        button=MediaButton(
-            text="Достопримечательности",
-            url="",
+        title="Достопримечательности",
+        description="Достопримечательности",
+        button=Button(
+            title="Достопримечательности",
             payload={
-                "selected_card": "достопримечательности"
+                "selected_card": "Культурные особенности"
             }
         )
     ),
     Image(
         image_id="997614/ad00f4d8cc80c3c98161",
-        title=None,
-        description=None,
-        button=MediaButton(
-            text="Национальные блюда",
-            url="",
+        title="Национальные блюда",
+        description="Национальные блюда",
+        button=Button(
+            title="Национальные блюда",
             payload={
                 "selected_card": "Национальные блюда"
             }
@@ -59,11 +57,10 @@ CARDS = (
     ),
     Image(
         image_id="213044/f4ef8b8d98ec8553485d",
-        title=None,
-        description=None,
-        button=MediaButton(
-            text="Культурные особенности",
-            url="",
+        title="Культурные особенности",
+        description="Культурные особенности",
+        button=Button(
+            title="Культурные особенности",
             payload={
                 "selected_card": "Культурные особенности"
             }
@@ -71,29 +68,27 @@ CARDS = (
     ),
     Image(
         image_id="997614/4ea20a45e9e095b3c31c",
-        title=None,
-        description=None,
-        button=MediaButton(
-            text="Факты о стране",
-            url="",
+        title="Факты о стране",
+        description="Факты о стране",
+        button=Button(
+            title="Факты о стране",
             payload={
                 "selected_card": "Факты о стране"
             }
         )
     ),
     Image(
-        image_id="213044/c257bd5803ae090a465e",
-        title=None,
-        description=None,
-        button=MediaButton(
-            text="Творчество",
-            url="",
+        image_id="213044/c9bf85a9711ae2e6b1ec",
+        title="Творчество",
+        description="Творчество",
+        button=Button(
+            title="Творчество",
             payload={
                 "selected_card": "Творчество"
             }
         )
     )
-)
+]
 
 
 class HybridStorage(MemoryStorage):
@@ -419,9 +414,14 @@ async def handler_show_cards(alice: AliceRequest, state: State, **kwargs):
         alice_state=state
     )
 
+    # return alice.response_items_list(
+    #     text="Выберите одну из карт",
+    #     header="TEST",
+    #     items=CARDS
+    # )
     return alice.response_items_list(
         text="Выберите одну из карт",
-        header="",
+        header="Выберите одну из карт",
         items=CARDS
     )
 
