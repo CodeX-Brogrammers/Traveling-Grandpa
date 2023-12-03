@@ -103,6 +103,36 @@ class Question(Document):
         name = "Questions"
 
 
+class CardType(str, enum.Enum):
+    ATTRACTIONS = "Достопримечательности"
+    NATIONAL_DISHES = "Национальные блюда"
+    CULTURAL_FEATURES = "Культурные особенности"
+    FACTS = "Факты о стране"
+    CREATIVITY = "Творчество"
+
+
+class CardAnswer(BaseModel):
+    correct: Text
+    incorrect: Text
+
+
+class Card(BaseModel):
+    type: CardType
+    question: Text
+    answers: CardAnswer
+    image: Image | None = Field(None)
+
+
+class Country(Document):
+    name: str
+    facts: conlist(Text, max_length=3)
+    hints: conlist(Text, max_length=3)
+    cards: conlist(Card, max_length=5)
+
+    class Settings:
+        name = "Countries"
+
+
 async def init_database(*_):
     client = AsyncIOMotorClient(settings.mongodb_url)
     await init_beanie(database=client["QUEST"], document_models=[Question, UserData])

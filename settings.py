@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     port: int = Field(3010)
     host: str = Field("localhost")
 
-    mongodb_url: str = Field(..., alias="MONGODB_URL")
+    mongodb_url: str = Field("mongo://127.0.0.1:27017", alias="MONGODB_URL")
 
 
 settings = Settings()
