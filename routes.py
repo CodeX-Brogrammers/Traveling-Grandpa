@@ -390,7 +390,7 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
 async def handler_start_game(alice: AliceRequest, state: State, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Начать игру")
     # return await handler_question(alice)
-    return await handler_show_cards(alice, state)
+    return await handler_show_cards(alice, state=state)
 
 # Отказ от игры и выход
 @dp.request_handler(
