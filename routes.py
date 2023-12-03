@@ -34,9 +34,9 @@ FACT_ANSWER = ("Хотите послушать интересный факт ?"
 
 CARDS = (
     Image(
-        image_id="213044/c257bd5803ae090a465e",
-        title="",
-        description="",
+        image_id="997614/d1a030478031816bf0a3",
+        title=None,
+        description=None,
         button=MediaButton(
             text="Достопримечательности",
             url="",
@@ -46,9 +46,9 @@ CARDS = (
         )
     ),
     Image(
-        image_id="213044/c257bd5803ae090a465e",
-        title="",
-        description="",
+        image_id="997614/ad00f4d8cc80c3c98161",
+        title=None,
+        description=None,
         button=MediaButton(
             text="Национальные блюда",
             url="",
@@ -58,9 +58,9 @@ CARDS = (
         )
     ),
     Image(
-        image_id="213044/c257bd5803ae090a465e",
-        title="",
-        description="",
+        image_id="213044/f4ef8b8d98ec8553485d",
+        title=None,
+        description=None,
         button=MediaButton(
             text="Культурные особенности",
             url="",
@@ -70,9 +70,9 @@ CARDS = (
         )
     ),
     Image(
-        image_id="213044/c257bd5803ae090a465e",
-        title="",
-        description="",
+        image_id="997614/4ea20a45e9e095b3c31c",
+        title=None,
+        description=None,
         button=MediaButton(
             text="Факты о стране",
             url="",
@@ -83,8 +83,8 @@ CARDS = (
     ),
     Image(
         image_id="213044/c257bd5803ae090a465e",
-        title="",
-        description="",
+        title=None,
+        description=None,
         button=MediaButton(
             text="Творчество",
             url="",
