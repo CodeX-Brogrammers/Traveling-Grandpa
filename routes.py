@@ -2,7 +2,7 @@ from random import choice, shuffle
 from typing import Optional
 import logging
 
-from aioalice.types import AliceRequest, Button, AliceResponse
+from aioalice.types import AliceRequest, AliceResponse, Button, MediaButton, Image
 from aioalice.dispatcher.storage import MemoryStorage
 from beanie import PydanticObjectId
 from aioalice import Dispatcher
@@ -31,6 +31,69 @@ GAME_BUTTONS = [HINT_Button, NEXT_Button, HELP_Button]
 POSSIBLE_ANSWER = ("Начинаем ?", "Готовы начать ?", "Поехали ?")
 CONTINUE_ANSWER = ("Продолжим ?", "Едем дальше ?")
 FACT_ANSWER = ("Хотите послушать интересный факт ?",)
+
+CARDS = (
+    Image(
+        image_id="213044/c257bd5803ae090a465e",
+        title="",
+        description="",
+        button=MediaButton(
+            text="Достопримечательности",
+            url="",
+            payload={
+                "selected_card": "достопримечательности"
+            }
+        )
+    ),
+    Image(
+        image_id="213044/c257bd5803ae090a465e",
+        title="",
+        description="",
+        button=MediaButton(
+            text="Национальные блюда",
+            url="",
+            payload={
+                "selected_card": "Национальные блюда"
+            }
+        )
+    ),
+    Image(
+        image_id="213044/c257bd5803ae090a465e",
+        title="",
+        description="",
+        button=MediaButton(
+            text="Культурные особенности",
+            url="",
+            payload={
+                "selected_card": "Культурные особенности"
+            }
+        )
+    ),
+    Image(
+        image_id="213044/c257bd5803ae090a465e",
+        title="",
+        description="",
+        button=MediaButton(
+            text="Факты о стране",
+            url="",
+            payload={
+                "selected_card": "Факты о стране"
+            }
+        )
+    ),
+    Image(
+        image_id="213044/c257bd5803ae090a465e",
+        title="",
+        description="",
+        button=MediaButton(
+            text="Творчество",
+            url="",
+            payload={
+                "selected_card": "Творчество"
+            }
+        )
+    )
+)
 
 
 class HybridStorage(MemoryStorage):
@@ -323,10 +386,11 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
 )
 @mixin_appmetrica_log(dp)
 @mixin_can_repeat(dp)
-async def handler_start_game(alice: AliceRequest, **kwargs):
+@mixin_state
+async def handler_start_game(alice: AliceRequest, state: State, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Начать игру")
-    return await handler_question(alice)
-
+    # return await handler_question(alice)
+    return await handler_show_cards(alice, state)
 
 # Отказ от игры и выход
 @dp.request_handler(
@@ -339,6 +403,38 @@ async def handler_reject_game(alice: AliceRequest, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Отмена игры")
     answer = "Было приятно видеть вас на моей лекции. Заходите почаще, всегда рада."
     return alice.response(answer, end_session=True)
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.SHOW_CARDS),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
+@mixin_state
+async def handler_show_cards(alice: AliceRequest, state: State, **kwargs):
+    await dp.storage.set_state(
+        alice.session.user_id,
+        GameStates.SELECT_CARD,
+        alice_state=state
+    )
+
+    return alice.response_items_list(
+        text="Выберите одну из карт",
+        header="",
+        items=CARDS
+    )
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.SELECT_CARD),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
+@mixin_state
+async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
+    return await handler_reject_game(alice)
 
 
 @dp.request_handler(

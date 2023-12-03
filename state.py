@@ -34,8 +34,8 @@ class GameStates(Helper):
     mode = HelperMode.snake_case
 
     START = Item()  # Навык только запустился
-    # SELECT_GAME = Item()  # Выбор режима (Default или Fast)
-    # SELECT_DIFFICULTY = Item()  # ?Выбор сложности?
+    SHOW_CARDS = Item()  # Показ карточек
+    SELECT_CARD = Item()  # Выбор карточки
     QUESTION_TIME = Item()  # Время вопроса
     GUESS_ANSWER = Item()  # Выбор ответов
     FACT = Item()  # Выбор ответов
