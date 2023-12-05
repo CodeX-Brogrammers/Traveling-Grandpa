@@ -31,7 +31,11 @@ def _calculate_correct_answer(
     result = []
     normalized_user_answer = set(nlu.lemmatize(nlu.tokenizer(user_answer)))
     for answer in answers:
-        normalized_answer = set(str(answer.number)) if by_number else set(answer.clean)
+        if by_number and answer.number != 0:
+            normalized_answer = set(str(answer.number))
+        else:
+            normalized_answer = set(answer.clean)
+
         coincidence = nlu.calculate_coincidence(normalized_user_answer, normalized_answer)
         if coincidence >= threshold:
             result.append(
@@ -128,6 +132,15 @@ class SelectCardHandler(BaseHandler):
             return self.button()
 
         return self.text(exclude_tokens=["о"])
+
+
+class QuestionHandler(BaseHandler):
+    def condition(self) -> bool:
+        state = State.from_request(self.alice)
+        return state.current == GameStates.QUESTION_TIME
+
+    def execute(self) -> list[Diff] | None:
+        return self.text()
 
 
 if __name__ == '__main__':
