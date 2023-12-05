@@ -15,7 +15,10 @@ FROM python:3.10.13-alpine
 
 WORKDIR /app
 
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
 COPY --from=builder /wheels /wheels
+COPY nlu .
 COPY *.py .
 
 RUN pip install --no-cache /wheels/*
