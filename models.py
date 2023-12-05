@@ -1,7 +1,4 @@
-from dataclasses import dataclass
 from typing import Optional, Union
-from os import getenv
-import asyncio
 import enum
 
 from beanie import Document, Indexed, init_beanie, PydanticObjectId
@@ -9,32 +6,6 @@ from pydantic import BaseModel, conlist, model_validator, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from settings import settings
-
-
-class RepeatKey(enum.Enum):
-    LAST = "last"
-    HINT = "hint"
-    QUESTION = "question"
-
-
-@dataclass(slots=True, frozen=True)
-class CleanAnswer:
-    src: str
-    clean: list[str]
-    number: int
-
-
-@dataclass(slots=True, frozen=True)
-class Diff:
-    answer: str
-    number: int
-    coincidence: float
-
-
-@dataclass(slots=True, frozen=True)
-class UserCheck:
-    diff: Optional[Diff] = None
-    is_true_answer: bool = False
 
 
 class Text(BaseModel):
@@ -59,10 +30,6 @@ class Answer(BaseModel):
     is_true: bool = False
 
 
-class QuestionStatistic(Document):
-    question_id: Indexed(str, unique=True)
-
-
 class UserData(Document):
     user_id: Indexed(str, unique=True)
     passed_questions: list[PydanticObjectId] = Field(default_factory=list)
@@ -84,11 +51,6 @@ class UserData(Document):
             self.passed_questions.append(question_id)
             await self.save()
 
-"""
-user_id
-|-> Пройденные верно вопросы list(question_id)
-|-> Пройденные неверно вопросы list(question_id)
-"""
 
 # Модель из БД
 class Question(Document):
@@ -124,7 +86,7 @@ class Card(BaseModel):
 
 
 class Country(Document):
-    name: str
+    names: list[str] = Field(..., description="Возможные наименование страны")
     facts: conlist(Text, max_length=3)
     hints: conlist(Text, max_length=3)
     cards: conlist(Card, max_length=5)
@@ -174,4 +136,6 @@ async def example():
 
 
 if __name__ == "__main__":
-    asyncio.run(example())
+    # asyncio.run(example())
+    # CardType("")
+    print(CardType.__dict__)

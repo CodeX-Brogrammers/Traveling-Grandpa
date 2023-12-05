@@ -4,7 +4,7 @@ from functools import wraps
 from aioalice.types import AliceRequest, AliceResponse
 from aioalice import Dispatcher
 
-from models import RepeatKey
+from schemes import RepeatKey
 from state import State
 
 
@@ -32,8 +32,13 @@ def mixin_state(func: Callable):
     @wraps(func)
     async def wrapper(alice: AliceRequest, *args, **kwargs):
         if kwargs.get("state", None) is None:
-            state = State.from_request(alice)
-            kwargs["state"] = state
+            for value in args:
+                if isinstance(value, State):
+                    state = value
+                    break
+            else:
+                state = State.from_request(alice)
+                kwargs["state"] = state
         else:
             state = kwargs["state"]
 
@@ -85,9 +90,6 @@ def mixin_appmetrica_log(dp: Dispatcher):
                                 "intents": alice.request.nlu._raw_kwargs["intents"]
                             },
                             "game": {
-                                "current_true_answer": state.session.current_true_answer,
-                                "current_question_id": state.session.current_question,
-                                "current_answers": state.session.current_answers,
                                 "question_passed": state.session.question_passed,
                                 "number_of_hints": state.session.number_of_hints,
                                 "try_number": state.session.try_number,

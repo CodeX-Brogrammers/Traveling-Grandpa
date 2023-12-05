@@ -4,10 +4,11 @@ from aioalice.utils.helper import Helper, HelperMode, Item
 from pydantic import BaseModel, conint, Field
 from aioalice.types import AliceRequest
 
+from models import CardType
+
 
 class SessionState(BaseModel):
-    current_answers: Optional[list[tuple[int, str]]] = Field(default_factory=list)
-    current_true_answer: Optional[int] = Field(default=None)
+    selected_card: Optional[CardType] = None
     current_question: Optional[str] = None
     question_passed: Optional[conint(ge=0)] = Field(0)
     number_of_hints: int = 5
@@ -28,6 +29,10 @@ class State(BaseModel):
     @classmethod
     def from_request(cls, alice: AliceRequest):
         return cls(**alice._raw_kwargs["state"])
+
+    @property
+    def current(self) -> str:
+        return self.session.state
 
 
 class GameStates(Helper):
