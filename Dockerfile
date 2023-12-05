@@ -15,12 +15,12 @@ FROM python:3.10.13-alpine
 
 WORKDIR /app
 
-ENV PYTHONPATH "${PYTHONPATH}:/app"
-
 COPY --from=builder /wheels /wheels
-COPY nlu .
+COPY nlu /app/nlu
 COPY *.py .
 
 RUN pip install --no-cache /wheels/*
+
+ENV PYTHONPATH "${PYTHONPATH}:/app:/app/nlu"
 
 CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:3000", "--workers", "4", "--worker-class", "aiohttp.GunicornWebWorker"]
