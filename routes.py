@@ -8,6 +8,7 @@ from beanie import PydanticObjectId
 from aioalice import Dispatcher
 
 
+from nlu.cases import check_user_answer, SelectCardHandler, QuestionHandler
 from mixin import mixin_appmetrica_log, mixin_can_repeat, mixin_state
 from state import State, GameStates
 from schemes import RepeatKey, Diff
@@ -26,12 +27,12 @@ from const import (
     POSSIBLE_ANSWER,
     CONTINUE_ANSWER,
     FACT_ANSWER,
-    SELECT_CARDS
+    SELECT_CARDS,
+    SELECT_CARDS_ANSWERS
 )
 import filters
 import models
 import nlu
-from nlu.cases import check_user_answer, SelectCardHandler
 
 
 class HybridStorage(MemoryStorage):
@@ -155,7 +156,6 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
 @mixin_appmetrica_log(dp)
 @mixin_state
 async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
-    from const import SELECT_CARDS_ANSWERS
     result = check_user_answer(alice, [
         SelectCardHandler(SELECT_CARDS_ANSWERS)
     ])
@@ -168,7 +168,48 @@ async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
     else:
         state.session.selected_card = result
 
-    return await handler_show_cards(alice, state)
+    return await handler_question(alice, state=state)
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.QUESTION_TIME),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp, RepeatKey.QUESTION)
+@mixin_state
+async def handler_question(alice: AliceRequest, state: State, **kwargs):
+    # Get selected card
+    # Get random country
+    selected_card = state.session.selected_card
+
+    user_data = await models.UserData.get_user_data(alice.session.user_id)
+    data = await models.Country.aggregate([
+        {
+            '$match': {
+                '_id': {'$nin': user_data.passed_questions}
+            }
+        },
+        {"$sample": {"size": 1}}
+    ]).to_list()
+    if data:
+        data = data[0]
+
+    card = [value for value in data["cards"] if value["type"] == selected_card.value][0]
+    print(card)
+    # return alice.response("DA")
+    return alice.response_big_image(
+        text=card["question"]["src"],
+        tts=card["question"]["tts"],
+        image_id=card["image"],
+        title="",
+        description=card["question"]["src"]
+    )
+
+    # result = check_user_answer(alice, [
+    #     QuestionHandler()
+    # ])
+
 
 @dp.errors_handler()
 @mixin_appmetrica_log(dp)

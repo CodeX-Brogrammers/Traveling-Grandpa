@@ -49,7 +49,7 @@ def _calculate_correct_answer(
     return result
 
 
-def _clean_user_command(command: str, answers: list[CleanAnswer], exclude_tokens: list[str] | None= None) -> str:
+def _clean_user_command(command: str, answers: list[CleanAnswer], exclude_tokens: list[str] | None = None) -> str:
     user_answer_tokens = nlu.lemmatize(nlu.tokenizer(command))
     common_answers_words = nlu.find_common_words([answer.src for answer in answers])
     if exclude_tokens:

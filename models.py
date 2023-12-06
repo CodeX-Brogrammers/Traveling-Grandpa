@@ -66,7 +66,7 @@ class Question(Document):
 
 
 class CardType(str, enum.Enum):
-    ATTRACTIONS = "Достопримечательности"
+    ATTRACTIONS = "Достопримечательность"
     NATIONAL_DISHES = "Национальные блюда"
     CULTURAL_FEATURES = "Культурные особенности"
     FACTS = "Факты о стране"
@@ -95,9 +95,21 @@ class Country(Document):
         name = "Countries"
 
 
+class CountryShortView(BaseModel):
+    names: list[str]
+    card: Card
+
+    class Settings:
+        projection = {"names": 1, "card": {"$filter": {
+            "input": "$cards",
+            "as": "card",
+            "cond": {"$eq": ["$$card.type", "Факты о стране"]}
+        }}}
+
+
 async def init_database(*_):
     client = AsyncIOMotorClient(settings.mongodb_url)
-    await init_beanie(database=client["QUEST"], document_models=[Question, UserData])
+    await init_beanie(database=client["QUEST"], document_models=[Question, UserData, Country])
 
 
 # This is an asynchronous example, so we will access it from an async function
