@@ -30,7 +30,9 @@ from const import (
     SELECT_CARDS,
     SELECT_CARDS_ANSWERS
 )
+import repositories
 import filters
+import schemes
 import models
 import nlu
 
@@ -179,29 +181,25 @@ async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
 @mixin_can_repeat(dp, RepeatKey.QUESTION)
 @mixin_state
 async def handler_question(alice: AliceRequest, state: State, **kwargs):
-    # Get selected card
-    # Get random country
     selected_card = state.session.selected_card
-
+    # TODO: запоминать пройденные типы карточек
     user_data = await models.UserData.get_user_data(alice.session.user_id)
-    data = await models.Country.aggregate([
-        {
-            "$unwind": "$cards"
-        },
-        {
-            "$match": {
-                "_id": {"$nin": user_data.passed_questions},
-                "cards.type": selected_card.value   
-            }
-        },
-        {"$sample": {"size": 1}}
-    ], projection_model=models.CountryShortView).to_list()
+    country = repositories.CountryRepository.random(
+        card_type=selected_card,
+        passed_questions=user_data.passed_questions
+    )
     
-    if not data:
+    if country is None:
         return await handler_show_cards(alice, state=state, extra_text="Повтори ещё раз")
-        
-    card = data[0].card
-    # return alice.response("DA")
+    card = country.card
+    
+    state.session.current_question = str(country.id)
+    await dp.storage.set_state(
+        alice.session.user_id,
+        GameStates.GUESS_ANSWER,
+        alice_state=state
+    )
+    
     return alice.response_big_image(
         text=card.question.src,
         tts=card.question.tts,
@@ -210,9 +208,40 @@ async def handler_question(alice: AliceRequest, state: State, **kwargs):
         description=card.question.src
     )
 
-    # result = check_user_answer(alice, [
-    #     QuestionHandler()
-    # ])
+
+@dp.request_handler(
+    filters.SessionState(GameStates.GUESS_ANSWER),
+    state="*"
+)
+@mixin_can_repeat(dp)
+@mixin_state
+async def handler_quess_answer(alice: AliceRequest, state: State):
+    country_id = state.session.current_question
+    selected_card = state.session.selected_card
+    country = await repositories.CountryRepository.get_card_with_names(
+        country_id=country_id,
+        card_type=selected_card
+    )
+    
+    if country is None:
+        pass
+    
+    possible_answers = [schemes.AnswerWithIndex(index=0, text=name) for name in country.names]
+    result = check_user_answer(alice, handlers=[QuestionHandler(
+        answers=possible_answers
+    )])
+    
+    if result is None:
+        pass
+    
+    
+    
+    # if not isinstance(result, models.UserCheck):
+    #     return await handler_answer_brute_force(alice)
+
+    # if result.is_true_answer:
+    #     return await handler_true_answer(alice)
+    # return await handler_false_answer(alice, diff=result.diff)
 
 
 @dp.errors_handler()

@@ -82,7 +82,7 @@ class Card(BaseModel):
     type: CardType
     question: Text
     answers: CardAnswer
-    image: Image | None = Field(None)
+    image: Image | str | None = Field(None)
 
 
 class Country(Document):
@@ -96,11 +96,20 @@ class Country(Document):
 
 
 class CountryShortView(BaseModel):
+    id: PydanticObjectId = Field(alias="_id")
     names: list[str]
     card: Card
 
     class Settings:
-        projection = {"names": 1, "card": "$cards"}
+        projection = {"_id": 1, "names": 1, "card": "$cards"}
+
+
+class CountryFacts(BaseModel):
+    facts: conlist(Text, max_length=3)
+    
+
+class CountryHints(BaseModel):
+    hints: conlist(Text, max_length=5)
 
 
 async def init_database(*_):
@@ -110,40 +119,26 @@ async def init_database(*_):
 
 # This is an asynchronous example, so we will access it from an async function
 async def example():
-    # Beanie uses Motor async client under the hood
-    client = AsyncIOMotorClient(settings.mongodb_url)
-    ids = [
-        PydanticObjectId("640dd396fda67cd71b9c9f3a"),
-        PydanticObjectId("640dd396fda67cd71b9c9f39"),
-        PydanticObjectId("640dd396fda67cd71b9c9f38"),
-        PydanticObjectId("640dd396fda67cd71b9c9f37"),
-        PydanticObjectId("640dd396fda67cd71b9c9f36"),
-        PydanticObjectId("640dd396fda67cd71b9c9f3e"),
-        PydanticObjectId("640dd396fda67cd71b9c9f3d"),
-        PydanticObjectId("640dd396fda67cd71b9c9f3c"),
-        PydanticObjectId("640dd396fda67cd71b9c9f3b"),
-    ]
-    # Initialize beanie with the Product document class
-    await init_beanie(database=client["QUEST"], document_models=[Question, UserData])
-
-    data = await UserData.get_user_data("super123")
-    data.passed_questions = []
-    await data.save()
-    data = await Question.aggregate([
-        {'$match': {'_id': {'$nin': data.passed_questions}}},
+    await init_database()
+    
+    data = await Country.aggregate([
+        {
+            "$unwind": "$cards"
+        },
+        {
+            "$match": {
+                "cards.type": CardType.ATTRACTIONS
+            }
+        },
         {"$sample": {"size": 1}}
-    ]).to_list()
-    print(*data, sep="\n")
-
-    #
-    # data = await UserData.get_user_data("super123")
-    # await data.add_passed_question("640dd396fda67cd71b9c9f3a")
-    # print(data)
-    # data = await UserData.get_user_data("super123")
-    # print(data)
+    ], projection_model=CountryShortView).to_list()
+    
+    print(data)
 
 
 if __name__ == "__main__":
-    # asyncio.run(example())
+    import asyncio
+    asyncio.run(example())
     # CardType("")
-    print(CardType.__dict__)
+    # print(CardType.__dict__)
+    
