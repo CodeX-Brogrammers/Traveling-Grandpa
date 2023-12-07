@@ -186,24 +186,28 @@ async def handler_question(alice: AliceRequest, state: State, **kwargs):
     user_data = await models.UserData.get_user_data(alice.session.user_id)
     data = await models.Country.aggregate([
         {
-            '$match': {
-                '_id': {'$nin': user_data.passed_questions}
+            "$unwind": "$cards"
+        },
+        {
+            "$match": {
+                "_id": {"$nin": user_data.passed_questions},
+                "cards.type": selected_card.value   
             }
         },
         {"$sample": {"size": 1}}
-    ]).to_list()
-    if data:
-        data = data[0]
-
-    card = [value for value in data["cards"] if value["type"] == selected_card.value][0]
-    print(card)
+    ], projection_model=models.CountryShortView).to_list()
+    
+    if not data:
+        return await handler_show_cards(alice, state=state, extra_text="Повтори ещё раз")
+        
+    card = data[0].card
     # return alice.response("DA")
     return alice.response_big_image(
-        text=card["question"]["src"],
-        tts=card["question"]["tts"],
-        image_id=card["image"],
+        text=card.question.src,
+        tts=card.question.tts,
+        image_id=card.image,
         title="",
-        description=card["question"]["src"]
+        description=card.question.src
     )
 
     # result = check_user_answer(alice, [

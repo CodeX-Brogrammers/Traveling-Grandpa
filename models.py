@@ -100,11 +100,7 @@ class CountryShortView(BaseModel):
     card: Card
 
     class Settings:
-        projection = {"names": 1, "card": {"$filter": {
-            "input": "$cards",
-            "as": "card",
-            "cond": {"$eq": ["$$card.type", "Факты о стране"]}
-        }}}
+        projection = {"names": 1, "card": "$cards"}
 
 
 async def init_database(*_):
