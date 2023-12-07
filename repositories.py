@@ -25,13 +25,13 @@ class CountryRepository:
             },
             {
                 "$match": {
-                    "_id": country_id,
-                    "cards.type": card_type.value   
+                    "_id": PydanticObjectId(country_id),
+                    "cards.type": {"$eq": card_type.value}
                 }
             },
             {"$sample": {"size": 1}}
         ], projection_model=models.CountryShortView).to_list()
-        
+
         if country:
             return country[0]
         return None

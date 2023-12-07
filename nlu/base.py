@@ -27,7 +27,10 @@ def calculate_coincidence(
         input_tokens = set(input_tokens)
     if isinstance(source_tokens, list):
         source_tokens = set(source_tokens)
-    return len(input_tokens & source_tokens) / len(source_tokens)
+    try:
+        return len(input_tokens & source_tokens) / len(source_tokens)
+    except ZeroDivisionError:
+        return 0.0
 
 
 def find_occurrences(words: list[str], find_words: list[str], skip_index: set[int] = None) -> set:

@@ -8,7 +8,7 @@ from beanie import PydanticObjectId
 from aioalice import Dispatcher
 
 
-from nlu.cases import check_user_answer, SelectCardHandler, QuestionHandler
+from nlu.cases import check_user_answer, SelectCardHandler, QuessAnswerHandler
 from mixin import mixin_appmetrica_log, mixin_can_repeat, mixin_state
 from state import State, GameStates
 from schemes import RepeatKey, Diff
@@ -184,7 +184,7 @@ async def handler_question(alice: AliceRequest, state: State, **kwargs):
     selected_card = state.session.selected_card
     # TODO: запоминать пройденные типы карточек
     user_data = await models.UserData.get_user_data(alice.session.user_id)
-    country = repositories.CountryRepository.random(
+    country = await repositories.CountryRepository.random(
         card_type=selected_card,
         passed_questions=user_data.passed_questions
     )
@@ -192,7 +192,7 @@ async def handler_question(alice: AliceRequest, state: State, **kwargs):
     if country is None:
         return await handler_show_cards(alice, state=state, extra_text="Повтори ещё раз")
     card = country.card
-    
+    print(f"Country: {country.names}")
     state.session.current_question = str(country.id)
     await dp.storage.set_state(
         alice.session.user_id,
@@ -225,23 +225,37 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
     
     if country is None:
         pass
-    
+    print(country)
     possible_answers = [schemes.AnswerWithIndex(index=0, text=name) for name in country.names]
-    result = check_user_answer(alice, handlers=[QuestionHandler(
+
+    result = check_user_answer(alice, handlers=[QuessAnswerHandler(
         answers=possible_answers
     )])
-    
-    if result is None:
-        pass
-    
-    
-    
-    # if not isinstance(result, models.UserCheck):
-    #     return await handler_answer_brute_force(alice)
 
-    # if result.is_true_answer:
-    #     return await handler_true_answer(alice)
-    # return await handler_false_answer(alice, diff=result.diff)
+    if result is None:
+        return await handler_false_answer(alice, state=state)
+
+    first_country: Diff = result[0]
+    if first_country.coincidence >= 0.5:
+        return await handler_true_answer(alice, state=state)
+
+    return await handler_show_cards(alice, state=state)
+
+
+@mixin_state
+async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
+    state.session.try_number += 1
+
+    if state.session.try_number >= 3:
+        return await handler_show_cards(alice, state=state)
+    return alice.response("Не угадал, попробуй ещё раз")
+
+
+@mixin_state
+async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
+    state.session.try_number = 0
+
+    return await handler_show_cards(alice, state=state)
 
 
 @dp.errors_handler()

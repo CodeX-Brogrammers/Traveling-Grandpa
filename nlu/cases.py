@@ -134,10 +134,10 @@ class SelectCardHandler(BaseHandler):
         return self.text(exclude_tokens=["о"])
 
 
-class QuestionHandler(BaseHandler):
+class QuessAnswerHandler(BaseHandler):
     def condition(self) -> bool:
         state = State.from_request(self.alice)
-        return state.current == GameStates.QUESTION_TIME
+        return state.current == GameStates.GUESS_ANSWER
 
     def execute(self) -> list[Diff] | None:
         return self.text()
