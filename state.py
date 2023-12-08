@@ -12,6 +12,7 @@ class SessionState(BaseModel):
     current_question: Optional[str] = None
     question_passed: Optional[conint(ge=0)] = Field(0)
     number_of_hints: int = 5
+    latest_hints: list[int] = Field(default_factory=list)
     try_number: int = 0
     score: Optional[conint(ge=0)] = Field(0)
     state: str = "*"
@@ -33,6 +34,10 @@ class State(BaseModel):
     @property
     def current(self) -> str:
         return self.session.state
+    
+    def clear_after_question(self) -> None:
+        self.session.latest_hints = []
+        self.session.try_number = 0
 
 
 class GameStates(Helper):

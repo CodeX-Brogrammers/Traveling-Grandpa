@@ -5,29 +5,8 @@ from beanie import Document, Indexed, init_beanie, PydanticObjectId
 from pydantic import BaseModel, conlist, model_validator, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from schemes import Image, Text
 from settings import settings
-
-
-class Text(BaseModel):
-    src: str
-    tts: Optional[str]
-
-    @model_validator(mode='before')
-    def check_tts(cls, kwargs: dict):
-        if kwargs.get("tts", None) is None:
-            kwargs["tts"] = kwargs["src"]
-        return kwargs
-
-
-class Image(BaseModel):
-    src: str
-    yandex_id: str
-
-
-class Answer(BaseModel):
-    text: Text
-    description: Text
-    is_true: bool = False
 
 
 class UserData(Document):
@@ -50,19 +29,6 @@ class UserData(Document):
                 question_id = PydanticObjectId(question_id)
             self.passed_questions.append(question_id)
             await self.save()
-
-
-# Модель из БД
-class Question(Document):
-    full_text: Text
-    short_text: Text
-    hint: Text
-    answers: conlist(Answer, max_length=3)
-    image: Optional[Image]
-    fact: Text
-
-    class Settings:
-        name = "Questions"
 
 
 class CardType(str, enum.Enum):
