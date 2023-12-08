@@ -80,7 +80,7 @@ class CountryHints(BaseModel):
 
 async def init_database(*_):
     client = AsyncIOMotorClient(settings.mongodb_url)
-    await init_beanie(database=client["QUEST"], document_models=[Question, UserData, Country])
+    await init_beanie(database=client["QUEST"], document_models=[UserData, Country])
 
 
 # This is an asynchronous example, so we will access it from an async function
