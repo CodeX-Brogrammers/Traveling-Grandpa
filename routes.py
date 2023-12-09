@@ -393,7 +393,7 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
     user_tokens = nlu.lemmatize(alice.request.nlu.tokens)
     if state.session.number_of_hints <= 0:
         return alice.response(
-            "Извини внучок, у тебя больше нет подсказок",
+            "Извини, у тебя больше нет подсказок",
             buttons=GAME_BUTTONS_GROUP
         )
 
@@ -408,7 +408,7 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
     elif len(state.session.latest_hints) >= 3:
         # TODO: Повторение подсказок
         return alice.response(
-            "Извини внучок, ты получил все подсказки об этой стране.",
+            "Извини, ты получил все подсказки об этой стране.",
             buttons=GAME_BUTTONS_GROUP
         )
 
@@ -431,7 +431,7 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
         break
 
     if hint is None:
-        return alice.response("Извини внучок, ты получил все подсказки об этой стране")
+        return alice.response("Извини, ты получил все подсказки об этой стране")
 
     state.session.number_of_hints -= 1
     return alice.response(
