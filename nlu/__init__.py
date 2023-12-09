@@ -6,5 +6,6 @@ from nlu.base import (
     lemmatize,
     tokenizer,
     calculate_coincidence,
-    morph
+    morph,
+    declension_of_word_after_numeral
 )

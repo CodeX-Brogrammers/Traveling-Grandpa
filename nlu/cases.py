@@ -10,7 +10,6 @@ import nlu
 
 
 def _remove_common_words_from_answers(answers: list[AnswerWithIndex]) -> list[CleanAnswer]:
-    common_answers_words = nlu.find_common_words([value.text for value in answers])
     result = []
     for answer in answers:
         normalized_answer = nlu.lemmatize(nlu.tokenizer(answer.text))
@@ -19,7 +18,7 @@ def _remove_common_words_from_answers(answers: list[AnswerWithIndex]) -> list[Cl
                 number=answer.index,
                 src=answer.text,
                 clean=nlu.remove_common_words(
-                    normalized_answer, common_answers_words
+                    normalized_answer
                 )
             )
         )
@@ -51,12 +50,12 @@ def _calculate_correct_answer(
 
 def _clean_user_command(command: str, answers: list[CleanAnswer], exclude_tokens: list[str] | None = None) -> str:
     user_answer_tokens = nlu.lemmatize(nlu.tokenizer(command))
-    common_answers_words = nlu.find_common_words([answer.src for answer in answers])
+    common_words = set()
     if exclude_tokens:
         for token in set(exclude_tokens):
-            common_answers_words.add(token)
+            common_words.add(token)
 
-    result = nlu.remove_common_words(user_answer_tokens, common_answers_words)
+    result = nlu.remove_common_words(user_answer_tokens)
 
     skip_index = set()
     text_enters = []
@@ -66,16 +65,10 @@ def _clean_user_command(command: str, answers: list[CleanAnswer], exclude_tokens
         skip_index.symmetric_difference_update(indexs)
 
     for answer in answers:
-        text_enters = nlu.find_occurrences(result, answer.clean)
-        text_exclude = nlu.exclude_words(result, text_enters)
-        if text_exclude:
+        text_enters = nlu.find_occurrences(result, [*answer.clean, str(answer.number)])
+        to_exclude = nlu.exclude_words(result, text_enters)
+        if to_exclude:
             for number in text_enters:
-                result[number] = "*"
-
-        number_enters = nlu.find_occurrences(result, [str(answer.number)])
-        number_exclude = nlu.exclude_words(result, number_enters)
-        if number_exclude:
-            for number in number_enters:
                 result[number] = "*"
 
     return " ".join(result)
@@ -96,15 +89,15 @@ class BaseHandler:
     def set_alice(self, alice: AliceRequest):
         self.alice = alice
 
-    def text(self, exclude_tokens: list[str] | None = None) -> list[Diff] | None:
+    def text(self, exclude_tokens: list[str] | None = None, skip_number_check: bool = False) -> list[Diff] | None:
         answers = _remove_common_words_from_answers(self.answers)
         user_answer = _clean_user_command(
             command=self.alice.request.command,
             answers=answers,
             exclude_tokens=exclude_tokens
         )
-
-        for condition in [False, True]:
+        conditions = [False] if skip_number_check else [True, False]
+        for condition in conditions:
             diffs = _calculate_correct_answer(
                 user_answer, answers, by_number=condition
             )
@@ -140,32 +133,4 @@ class QuessAnswerHandler(BaseHandler):
         return state.current == GameStates.GUESS_ANSWER
 
     def execute(self) -> list[Diff] | None:
-        return self.text()
-
-
-if __name__ == '__main__':
-    import time
-
-    print("start")
-    start = time.perf_counter()
-    user_answer = "думаю это рыцари матильцы"
-    answers = [(i, answer) for i, answer in enumerate([
-        "Рыцари-тевроны и рыцари-матильцы", "Мусульманские воины и крестоносцы из Европы", "Рыцари-тамплиеры и рыцари-оспиталиеры"], 1)]
-
-    clean_answers = _remove_common_words_from_answers(answers)
-    clean_user_answer = _clean_user_command(user_answer, clean_answers)
-    print("Clean user answer", clean_user_answer)
-    print("Clean answers", clean_answers)
-    print(round(time.perf_counter() - start, 3))
-    print()
-
-    start = time.perf_counter()
-    user_answer = "это точно не битва при бородино это битва при ватерлоо или аустерлице"
-    answers = [(i, answer) for i, answer in enumerate([
-        "битва при аустерлице", "битва при бородино", "битва при ватерлоо"], 1)]
-
-    clean_answers = _remove_common_words_from_answers(answers)
-    clean_user_answer = _clean_user_command(user_answer, clean_answers)
-    print("Clean user answer", clean_user_answer)
-    print("Clean answers", clean_answers)
-    print(round(time.perf_counter() - start, 3))
+        return self.text(skip_number_check=True)

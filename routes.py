@@ -1,34 +1,22 @@
-from random import choice, shuffle
-from typing import Optional
+from random import choice
 import logging
 
-from aioalice.types import AliceRequest, AliceResponse, Button
 from aioalice.dispatcher.storage import MemoryStorage
-from beanie import PydanticObjectId
+from aioalice.types import AliceRequest
 from aioalice import Dispatcher
-
 
 from nlu.cases import check_user_answer, SelectCardHandler, QuessAnswerHandler
 from mixin import mixin_appmetrica_log, mixin_can_repeat, mixin_state
 from state import State, GameStates
 from schemes import RepeatKey, Diff
 from const import (
-    OK_BUTTON,
-    REJECT_BUTTON,
-    REPEAT_BUTTON,
-    REPEAT_QUESTION_BUTTON,
-    REPEAT_ANSWERS_BUTTON,
-    YOU_CAN_BUTTON,
-    HELP_BUTTON,
-    HINT_BUTTON,
-    NEXT_BUTTON,
-    MENU_BUTTONS,
-    GAME_BUTTONS,
-    POSSIBLE_ANSWER,
-    CONTINUE_ANSWER,
-    FACT_ANSWER,
+    MENU_BUTTONS_GROUP,
+    GAME_BUTTONS_GROUP,
     SELECT_CARDS,
-    SELECT_CARDS_ANSWERS
+    SELECT_CARDS_ANSWERS,
+    CONFIRM_BUTTONS_GROUP,
+    NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
+    REPEAT_OR_CLOSE_BUTTONS_GROUP
 )
 import repositories
 import filters
@@ -38,10 +26,10 @@ import nlu
 
 
 class HybridStorage(MemoryStorage):
-    async def get_state(self, user_id, alice_state: State = None):
-        if alice_state is None:
+    async def get_state(self, user_id, state: State = None):
+        if state is None:
             return super().get_state(user_id)
-        return alice_state.session.state
+        return state.current
 
     async def set_state(self, user_id, state: str, alice_state: State = None):
         if alice_state is None:
@@ -63,45 +51,94 @@ async def handler_start(alice: AliceRequest, state: State, **kwargs):
         GameStates.START,
         alice_state=state
     )
-    answer = "Уважаемые студенты, рада видеть вас на своей лекции. " \
-             "Я профессор исторических наук, Аврора Хистория. " \
-             "Вы можете узнать больше, если скажите \"Помощь\" и \"Что ты умеешь?\"" \
-             "Я хочу поговорить с вами о том, как история может стать настоящей сказкой. " \
-             "Что если я отправлю вас в настоящий мир фантазий и историй? " \
-             "Я уже подготовила наш волшебный поезд. Чтобы начать лекцию просто скажите \"Поехали\". Готовы ли вы отправиться в это путешествие? "
+
+    # TODO: TTS
+    # TODO: Картинка для старта
+    answer = "Приём, приём... Как слышно? Это твой дедушка!\n" \
+             "Я, как всегда, отправился в удивительное путешествие...\n" \
+             "Но в этот раз мне нужна твоя помощь!\n" \
+             "Видишь, из-за моих бесконечных приключений я совсем забыл, как называются разные страны.\n" \
+             "Можешь ли ты мне помочь их отгадать по интересным фактам?\n"
+
     return alice.response_big_image(
         answer,
-        tts=answer + '<speaker audio="dialogs-upload/97e0871e-cf33-4da5-9146-a8fa353b965e/9484707f-a9ae-4a1c-b8da-8111e026a9a8.opus">',
+        # tts=answer + '<speaker audio="dialogs-upload/97e0871e-cf33-4da5-9146-a8fa353b965e/9484707f-a9ae-4a1c-b8da-8111e026a9a8.opus">',
         image_id="213044/8caa36129ca6356f8981",
-        buttons=MENU_BUTTONS,
+        buttons=MENU_BUTTONS_GROUP,
         title="",
         description=answer
+    )
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.END),
+    filters.OneOfFilter(
+        filters.ConfirmFilter(),
+        filters.TextContainFilter(["Новая", "игра"]),
+        filters.TextContainFilter(["сначала"]),
+    ),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+async def handler_new_game(alice: AliceRequest, **kwargs):
+    return await handler_show_cards(alice)
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.END),
+    filters.OneOfFilter(
+        filters.EndFilter(),
+        filters.RejectFilter(),
+        filters.TextContainFilter(["Выход"]),
+        filters.TextContainFilter(["Хватит"]),
+        filters.TextContainFilter(["Закрыть"])
+    ),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+async def handler_close_game(alice: AliceRequest, text: str | None = None, **kwargs):
+    close_text = "Буду скучать, возвращайся! С любовью, твой дедушка."
+    if text:
+        close_text = text + close_text
+
+    return alice.response(
+        close_text,
+        end_session=True
     )
 
 
 @dp.request_handler(filters.EndFilter(), state="*")
 @mixin_can_repeat(dp)
 @mixin_appmetrica_log(dp)
+@mixin_state
 async def handler_end(alice: AliceRequest, state: State = None, **kwargs):
-    if state is None:
-        state = State.from_request(alice)
     logging.info(f"User: {alice.session.user_id}: Handler->Заключение")
+    text = "Понимаю, что у тебя свои дела и обязанности, и я ценю всю помощь, что ты уже мне предоставил.\n" \
+           "Не переживай, я продолжу мое увлекательное путешествие и поделюсь новостями, когда ты вернёшься.\n" \
+           "\n"
+
+    if state.current == GameStates.START:
+        return await handler_close_game(alice, text=text)
+
+    user = await repositories.UserRepository.get(alice.session.user_id)
+    score = user.score
+    global_score = await repositories.UserRepository.increase_global_score(user)
+    rank = await repositories.UserRepository.get_rank(user)
+
+    text += f"За игру вы заработали {score} очков.\n" \
+            f"Общее количество очков: {global_score}.\n" \
+            f"Вы занимаете {rank} место в рейтинге. Желаете начать заново?"
+
+    state.clear_after_question()
     await dp.storage.set_state(
         alice.session.user_id,
         GameStates.END,
         alice_state=state
     )
-    text = "Что-ж мы прибываем на конечную станцию и наше путешествие подходит к концу. \n" \
-           "Это было крайне увлекательно! \n" \
-           "Я давно не встречала таких интересных людей, как вы! \n" \
-           f"Вы ответили верно на {state.session.score} вопросов из {state.session.question_passed}. \n" \
-           "Спасибо за наше путешествие. Возвращайтесь почаще, наш поезд всегда вас ждёт! \n" \
-           "Желаете начать заново?"
-    state.session.score = 0
-    state.session.question_passed = 0
+
     return alice.response(
-        text, buttons=[OK_BUTTON, REJECT_BUTTON],
-        session_state=state.session.dict()
+        text, buttons=NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
+        session_state=state.session.model_dump()
     )
 
 
@@ -110,6 +147,7 @@ async def handler_end(alice: AliceRequest, state: State = None, **kwargs):
 @mixin_appmetrica_log(dp)
 @mixin_state
 async def handler_repeat(alice: AliceRequest, state: State):
+    # TODO: Сделать повторение
     return alice.response("Повторять нечего")
 
 
@@ -119,8 +157,15 @@ async def handler_repeat(alice: AliceRequest, state: State):
 @mixin_state
 async def handler_can_do(alice: AliceRequest, state: State, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Что ты умеешь")
-    answer = "Всё умею"
-    return alice.response(answer)
+    answer = "Навык 'Отгадай страну с дедушкой' отправит тебя в увлекательное путешествие по всему миру.\n" \
+             "Продвигаясь все дальше ты будешь отвечать на вопросы и зарабатывать баллы.\n" \
+             "Узнай интересные факты, побывай в красивых местах и проникнись атмосферой " \
+             "других стран вместе с дедушкой путешественником."
+    # TODO: tts
+    return alice.response(
+        answer,
+        buttons=MENU_BUTTONS_GROUP
+    )
 
 
 @dp.request_handler(filters.HelpFilter(), state="*")
@@ -129,31 +174,37 @@ async def handler_can_do(alice: AliceRequest, state: State, **kwargs):
 @mixin_state
 async def handler_help(alice: AliceRequest, state: State, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Помощь")
-    fsm_state = await dp.storage.get_state(alice.session.user_id, state)
-    if fsm_state.upper() in ("GUESS_ANSWER", "FACT", "QUESTION_TIME"):
-        answer = "В данный момент вы можете попросить меня о следующем: \n" \
-                 "1. Повтори - повторю свой последний ответ \n" \
-                 "2. Повтори вопрос \n" \
-                 "3. Подсказка \n" \
-                 "4. Сколько осталось подсказок \n" \
-                 "5. Пропустить вопрос - если вопрос сложный, то так уж и быть пропустим его \n" \
-                 "6. Перезапуск - начнем с начала \n" \
-                 "7. Выход - мы остановим лекцию и вы спокойно сможете идти по своим делам \n"
-        return alice.response(
-            answer,
-            buttons=[
-                REPEAT_QUESTION_BUTTON,
-                REPEAT_ANSWERS_BUTTON,
-                *GAME_BUTTONS
-            ]
-        )
+    answer = "В данный момент вам доступны следующие команды:\n"
+    buttons = []
 
-    # TODO: Заменить базовый текст помощи, он не напоминает помощь
-    answer = "Тут будет помощь"
-    if fsm_state.upper() in ("START", "*"):
-        answer = f"{answer}\n{choice(POSSIBLE_ANSWER)}"
-        return alice.response(answer, buttons=MENU_BUTTONS)
-    return alice.response(answer)
+    match state.current:
+        case GameStates.GUESS_ANSWER | GameStates.FACT | GameStates.QUESTION_TIME:
+            answer += "Подсказка\n" \
+                      "Сколько осталось подсказок ?\n" \
+                      "Следующий вопрос\n" \
+                      "Повтори\n" \
+                      "Завершить игру"
+            buttons.extend(GAME_BUTTONS_GROUP)
+
+        case GameStates.SELECT_CARD:
+            answer += "1 по 5. Выбор карточек\n" \
+                      "Повторить карточки\n" \
+                      "Выход\n"
+            buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
+
+        case GameStates.END:
+            answer += "Начать заново\n" \
+                      "Завершить игру"
+            buttons.extend(NEW_OR_CLOSE_GAME_BUTTONS_GROUP)
+
+        case _:
+            answer += "1. Начать игру\n" \
+                      "2. Что-ты умеешь\n" \
+                      "3. Повтори\n" \
+                      "4. Завершить игру"
+            buttons.extend(MENU_BUTTONS_GROUP)
+
+    return alice.response(answer, buttons=buttons)
 
 
 @dp.request_handler(filters.RestartFilter(), state="*")
@@ -175,19 +226,6 @@ async def handler_start_game(alice: AliceRequest, state: State, **kwargs):
     return await handler_show_cards(alice, state=state)
 
 
-# Отказ от игры и выход
-@dp.request_handler(
-    filters.RejectFilter(),
-    filters.SessionState(GameStates.START),
-    state="*"
-)
-@mixin_appmetrica_log(dp)
-async def handler_reject_game(alice: AliceRequest, **kwargs):
-    logging.info(f"User: {alice.session.user_id}: Handler->Отмена игры")
-    answer = "Заходите почаще, всегда рад."
-    return alice.response(answer, end_session=True)
-
-
 @dp.request_handler(
     filters.SessionState(GameStates.SHOW_CARDS),
     filters.ConfirmFilter(),
@@ -203,22 +241,27 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
         alice_state=state
     )
 
+    # TODO: Переделать картинки для карточек
     return alice.response_items_list(
         text=extra_text if extra_text else "Выберите одну из карт",
         header="Выберите одну из карт",
-        items=SELECT_CARDS
+        items=SELECT_CARDS,
+        buttons=REPEAT_OR_CLOSE_BUTTONS_GROUP
     )
 
 
 @dp.request_handler(
-    filters.SessionState(GameStates.SHOW_CARDS),
+    filters.OneOfFilter(
+        filters.SessionState(GameStates.START),
+        filters.SessionState(GameStates.SHOW_CARDS),
+    ),
     filters.RejectFilter(),
     state="*"
 )
 @mixin_appmetrica_log(dp)
 @mixin_can_repeat(dp)
 @mixin_state
-async def handler_reject_game(alice: AliceRequest, state: State):
+async def handler_reject_game(alice: AliceRequest, state: State, **kwargs):
     return await handler_end(alice, state=state)
 
 
@@ -253,32 +296,42 @@ async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
 @mixin_state
 async def handler_question(alice: AliceRequest, state: State, **kwargs):
     state.clear_after_question()
-    
+
     selected_card = state.session.selected_card
-    # TODO: запоминать пройденные типы карточек
-    user_data = await models.UserData.get_user_data(alice.session.user_id)
+    user = await repositories.UserRepository.get(alice.session.user_id)
+    passed_cards = await repositories.UserRepository.get_passed_cards(
+        user, selected_card
+    )
     country = await repositories.CountryRepository.random(
         card_type=selected_card,
-        passed_questions=user_data.passed_questions
+        passed_cards=passed_cards
     )
-    
+
     if country is None:
-        return await handler_show_cards(alice, state=state, extra_text="Повтори ещё раз")
+        return await handler_show_cards(
+            alice, state=state, extra_text="Вопросы этого типа закончились"
+        )
     card = country.card
-    print(f"Country: {country.names}")
+
+    await repositories.UserRepository.add_passed_country_card(
+        user, country_id=country.id, card_type=selected_card
+    )
+
+    print(f"Country: {country.alternatives}")
     state.session.current_question = str(country.id)
     await dp.storage.set_state(
         alice.session.user_id,
         GameStates.GUESS_ANSWER,
         alice_state=state
     )
-    
+
     return alice.response_big_image(
         text=card.question.src,
         tts=card.question.tts,
         image_id=card.image,
         title="",
-        description=card.question.src
+        description=card.question.src,
+        buttons=GAME_BUTTONS_GROUP
     )
 
 
@@ -297,28 +350,19 @@ async def handler_skip_question(alice: AliceRequest):
 
 
 @dp.request_handler(
-    filters.OneOfFilter(
-        # filters.DontKnowFilter(),
-        filters.TextContainFilter(["не", "знаю"]),
-        filters.TextContainFilter(["не", "могу"]),
-        filters.TextContainFilter(["сложно"]),
-        filters.TextContainFilter(["без", "понятия"]),
-        filters.TextContainFilter(["понятия", "не", "имею"]),
-    ),
+    filters.DontKnowFilter(),
     filters.SessionState(GameStates.GUESS_ANSWER),
     state="*"
 )
 @mixin_appmetrica_log(dp)
 async def handler_dont_know_answer(alice: AliceRequest):
     text = "Мы многого не знаем, попробуйте взять подсказку или перейдите на следующий вопрос. "
-    return alice.response(text, buttons=GAME_BUTTONS)
+    return alice.response(text, buttons=GAME_BUTTONS_GROUP)
 
 
 @dp.request_handler(
     filters.TextContainFilter(["подсказка"]),
-    filters.OneOfFilter(
-        filters.SessionState(GameStates.GUESS_ANSWER)
-    ),
+    filters.SessionState(GameStates.GUESS_ANSWER),
     state="*"
 )
 @mixin_appmetrica_log(dp)
@@ -326,35 +370,54 @@ async def handler_dont_know_answer(alice: AliceRequest):
 @mixin_state
 async def handler_hint(alice: AliceRequest, state: State, **kwargs):
     country_id = state.session.current_question
-    selected_card = state.session.selected_card
-    
+    user_tokens = nlu.lemmatize(alice.request.nlu.tokens)
     if state.session.number_of_hints <= 0:
-        return alice.response("Извини внучок, у тебя больше нет подсказок")
-    
+        return alice.response(
+            "Извини внучок, у тебя больше нет подсказок",
+            buttons=GAME_BUTTONS_GROUP
+        )
+
+    elif any([value in user_tokens for value in ("сколько", "остаться", "количество")]):
+        hints_count = state.session.number_of_hints
+        hints_count_text = nlu.declension_of_word_after_numeral('подсказка', hints_count)
+        return alice.response(
+            f"У тебя осталось {hints_count} {hints_count_text}.",
+            buttons=GAME_BUTTONS_GROUP
+        )
+
     elif len(state.session.latest_hints) >= 3:
-        return alice.response("Извини внучок, ты получил все подсказки об этой стране")
-    
+        # TODO: Повторение подсказок
+        return alice.response(
+            "Извини внучок, ты получил все подсказки об этой стране.",
+            buttons=GAME_BUTTONS_GROUP
+        )
+
     country: models.CountryHints = await repositories.CountryRepository.get_hints(
-        country_id=country_id,
-        card_type=selected_card
+        country_id=country_id
     )
-    
+
     hints: list[schemes.AnswerWithIndex] = [
-        schemes.AnswerWithIndex(index=index, text=hint) 
+        schemes.AnswerWithIndex(index=index, text=hint)
         for index, hint in enumerate(country.hints, 1)
     ]
-    
+
+    hint = None
     for _hint in hints:
         if _hint.index in state.session.latest_hints:
             continue
-        
-        hint = choice(hints)
+
+        hint = _hint
         state.session.latest_hints.append(hint.index)
-    
+        break
+
+    if hint is None:
+        return alice.response("Извини внучок, ты получил все подсказки об этой стране")
+
     state.session.number_of_hints -= 1
     return alice.response(
         hint.text.src,
-        tts=hint.text.tts
+        tts=hint.text.tts,
+        buttons=GAME_BUTTONS_GROUP
     )
 
 
@@ -367,16 +430,17 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
 async def handler_quess_answer(alice: AliceRequest, state: State):
     country_id = state.session.current_question
     selected_card = state.session.selected_card
-    
+
     country = await repositories.CountryRepository.get_card_with_names(
         country_id=country_id,
         card_type=selected_card
     )
-    
+
     if country is None:
         pass
-    print(country)
-    possible_answers = [schemes.AnswerWithIndex(index=0, text=name) for name in country.names]
+
+    print(f"{country=}")
+    possible_answers = [schemes.AnswerWithIndex(index=0, text=name) for name in country.alternatives]
 
     result = check_user_answer(alice, handlers=[QuessAnswerHandler(
         answers=possible_answers
@@ -401,18 +465,69 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
 
 @mixin_state
 async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
-    state.session.try_number = 0
+    country_id = state.session.current_question
+    selected_card = state.session.selected_card
+    try_count = state.session.try_count
+    latest_hints = state.session.latest_hints
 
-    return await handler_show_cards(alice, state=state)
+    user = await repositories.UserRepository.get(
+        alice.session.user_id
+    )
+    await repositories.UserRepository.increase_score(
+        user, 5 - try_count - bool(latest_hints)
+    )
+
+    country: models.CountryShortView = await repositories.CountryRepository.get_card_with_names(
+        country_id=country_id,
+        card_type=selected_card
+    )
+    card: models.Card = country.card
+    answer = card.answers.correct
+
+    await dp.storage.set_state(
+        alice.session.user_id,
+        GameStates.FACT,
+        alice_state=state
+    )
+
+    return alice.response(
+        answer.src,
+        tts=answer.tts,
+        buttons=CONFIRM_BUTTONS_GROUP
+    )
 
 
 @mixin_state
 async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
-    state.session.try_number += 1
+    country_id = state.session.current_question
+    selected_card = state.session.selected_card
 
-    if state.session.try_number >= 3:
-        return await handler_show_cards(alice, state=state)
-    return alice.response("Не угадал, попробуй ещё раз")
+    country: models.CountryShortView = await repositories.CountryRepository.get_card_with_names(
+        country_id=country_id,
+        card_type=selected_card
+    )
+    card: models.Card = country.card
+    answer = card.answers.incorrect
+
+    state.session.try_count += 1
+
+    if state.session.try_count >= 3:
+        await dp.storage.set_state(
+            alice.session.user_id,
+            GameStates.FACT,
+            alice_state=state
+        )
+        country_name = country.name
+        return alice.response(
+            f"Ты не угадал, это был {country_name}. Хочешь послушать интересный факт ?",
+            buttons=CONFIRM_BUTTONS_GROUP
+        )
+
+    return alice.response(
+        answer.src,
+        tts=answer.tts,
+        buttons=GAME_BUTTONS_GROUP
+    )
 
 
 @dp.request_handler(
@@ -424,23 +539,23 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
 @mixin_state
 async def handler_fact_confirm(alice: AliceRequest, state: State, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Отправка факта")
-    
+
     country_id = state.session.current_question
     country: models.CountryFacts = await repositories.CountryRepository.get_facts(
         country_id=country_id
     )
-    
+
     await dp.storage.set_state(
         alice.session.user_id,
         state=GameStates.QUESTION_TIME,
         alice_state=state
     )
-    
+
     fact: schemes.Text = choice(country.facts)
     return alice.response(
-        fact.src,
-        tts=fact.tts,
-        buttons=[OK_BUTTON, REJECT_BUTTON]
+        fact.src + "\n Хочешь продолжить ?",
+        tts=fact.tts + "\n Хочешь продолжить ?",
+        buttons=CONFIRM_BUTTONS_GROUP
     )
 
 

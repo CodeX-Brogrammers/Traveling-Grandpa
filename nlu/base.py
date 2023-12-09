@@ -74,8 +74,12 @@ def find_common_words(tokens: list[str]) -> set[str]:
     return result
 
 
-def remove_common_words(text_tokens: list[str], words: set[str]) -> list[str]:
-    result = [word for word in text_tokens if word not in words]
+def remove_common_words(text_tokens: list[str], exclude_words: set[str] | None = None) -> list[str]:
+    common_words = {"и", "в", "что", "он", "на", "с", "как", "это", "но", "из", "за", "при", "или"}
+    if exclude_words:
+        common_words |= exclude_words
+
+    result = [word for word in text_tokens if word not in common_words]
     return result
 
 
@@ -88,4 +92,3 @@ def declension_of_word_after_numeral(word: str, number: int) -> str:
     """
     word = morph.parse(word)[0]
     return word.make_agree_with_number(number).word
-

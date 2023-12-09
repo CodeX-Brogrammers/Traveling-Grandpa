@@ -1,6 +1,6 @@
 import enum
 
-from aioalice.dispatcher.filters import Filter, StateFilter, check_filter, AsyncFilter
+from aioalice.dispatcher.filters import Filter, check_filter, AsyncFilter
 from aioalice.types import AliceRequest
 
 import nlu
@@ -56,6 +56,11 @@ class EndFilter(Filter):
 class CanDoFilter(Filter):
     def check(self, alice: AliceRequest):
         return _check_included_intent_names(alice, ["WHATCANDO", "YANDEX.WHAT_CAN_YOU_DO"])
+
+
+class DontKnowFilter(Filter):
+    def check(self, alice: AliceRequest):
+        return _check_included_intent_names(alice, ["DontKnow"])
 
 
 class StartFilter(Filter):

@@ -92,8 +92,7 @@ def mixin_appmetrica_log(dp: Dispatcher):
                             "game": {
                                 "question_passed": state.session.question_passed,
                                 "number_of_hints": state.session.number_of_hints,
-                                "try_number": state.session.try_number,
-                                "score": state.session.score,
+                                "try_count": state.session.try_count
                             },
                             "state": game_state
                         }
