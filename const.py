@@ -38,7 +38,7 @@ FACT_ANSWER = ("Хотите послушать интересный факт ?"
 # TODO: Сделать генерацию карточек, нужно когда тема заканчивается
 SELECT_CARDS = [
     Image(
-        image_id="997614/d1a030478031816bf0a3",
+        image_id="997614/8e4eda6eb11d49980d4d",
         title="Достопримечательности",
         description="Достопримечательности",
         button=Button(
@@ -49,7 +49,7 @@ SELECT_CARDS = [
         )
     ),
     Image(
-        image_id="997614/ad00f4d8cc80c3c98161",
+        image_id="1540737/f91ca46e2da86edffc96",
         title="Национальные блюда",
         description="Национальные блюда",
         button=Button(
@@ -60,7 +60,7 @@ SELECT_CARDS = [
         )
     ),
     Image(
-        image_id="213044/f4ef8b8d98ec8553485d",
+        image_id="997614/6b6b4fb3948f86b612e8",
         title="Культурные особенности",
         description="Культурные особенности",
         button=Button(
@@ -71,7 +71,7 @@ SELECT_CARDS = [
         )
     ),
     Image(
-        image_id="997614/4ea20a45e9e095b3c31c",
+        image_id="997614/6af22da7d2ef486a58e8",
         title="Факты о стране",
         description="Факты о стране",
         button=Button(
@@ -82,7 +82,7 @@ SELECT_CARDS = [
         )
     ),
     Image(
-        image_id="213044/c9bf85a9711ae2e6b1ec",
+        image_id="1652229/06aa85c89296ea2dd776",
         title="Творчество",
         description="Творчество",
         button=Button(

@@ -52,21 +52,42 @@ async def handler_start(alice: AliceRequest, state: State, **kwargs):
         alice_state=state
     )
 
-    # TODO: TTS
     # TODO: Картинка для старта
-    answer = "Приём, приём... Как слышно? Это твой дедушка!\n" \
-             "Я, как всегда, отправился в удивительное путешествие...\n" \
+    answer = "Приём, приём... Как слышно? Это твой дедушка! и голосовой помощник Алеся!\n" \
+             "Мы как всегда, отправились в удивительное путешествие...\n" \
              "Но в этот раз мне нужна твоя помощь!\n" \
              "Видишь, из-за моих бесконечных приключений я совсем забыл, как называются разные страны.\n" \
              "Можешь ли ты мне помочь их отгадать по интересным фактам?\n"
 
     return alice.response_big_image(
         answer,
-        # tts=answer + '<speaker audio="dialogs-upload/97e0871e-cf33-4da5-9146-a8fa353b965e/9484707f-a9ae-4a1c-b8da-8111e026a9a8.opus">',
-        image_id="213044/8caa36129ca6356f8981",
+        tts='<speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/e9edf4de-ae29-44b2-a851-a3e9d39590d2.opus"> и голосовой помощник Алеся !'\
+            '<speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/e6b057c3-0ffa-453b-b56b-84e26e3844fd.opus">' \
+            '',
+        image_id="1652229/066bed1b217f0e2c894a",
         buttons=MENU_BUTTONS_GROUP,
         title="",
         description=answer
+    )
+
+
+@dp.request_handler(
+    filters.TextContainFilter(["алиса"]),
+    filters.SessionState(GameStates.START),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+async def handler_new_game(alice: AliceRequest, **kwargs):
+    return alice.response(
+        "ЧТО-ТО",
+        tts="""
+        <speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/6efc7e21-4f28-438f-b3bb-8585d0c14dd9.opus">
+        <speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/f0b8e03c-7cb0-446c-9c7e-e19dc4133f26.opus">
+        Это самый короткий путь до аэропорта по версии Яндекс карт.
+        <speaker audio="alice-sounds-things-phone-1.opus">
+        <speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/7acc4e36-471a-47a0-9883-3d3f3b17344a.opus">
+        Привет, мы рады тебя снова видеть, мы вот вот отправимся в новое путешествие ты с нами ?
+        """
     )
 
 
@@ -214,7 +235,21 @@ async def handler_restart(alice: AliceRequest, **kwargs):
 
 
 @dp.request_handler(
-    filters.ConfirmFilter(),
+    filters.OneOfFilter(
+        filters.SessionState(GameStates.START),
+        filters.SessionState(GameStates.SHOW_CARDS),
+    ),
+    filters.RejectFilter(),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
+@mixin_state
+async def handler_reject_game(alice: AliceRequest, state: State, **kwargs):
+    return await handler_end(alice, state=state)
+
+
+@dp.request_handler(
     filters.SessionState(GameStates.START),
     state="*"
 )
@@ -248,21 +283,6 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
         items=SELECT_CARDS,
         buttons=REPEAT_OR_CLOSE_BUTTONS_GROUP
     )
-
-
-@dp.request_handler(
-    filters.OneOfFilter(
-        filters.SessionState(GameStates.START),
-        filters.SessionState(GameStates.SHOW_CARDS),
-    ),
-    filters.RejectFilter(),
-    state="*"
-)
-@mixin_appmetrica_log(dp)
-@mixin_can_repeat(dp)
-@mixin_state
-async def handler_reject_game(alice: AliceRequest, state: State, **kwargs):
-    return await handler_end(alice, state=state)
 
 
 @dp.request_handler(
