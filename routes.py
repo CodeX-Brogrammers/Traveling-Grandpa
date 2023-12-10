@@ -140,8 +140,8 @@ async def handler_close_game(alice: AliceRequest, text: str | None = None, **kwa
     ),
     state="*"
 )
-@mixin_can_repeat(dp)
 @mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
 @mixin_state
 async def handler_end(alice: AliceRequest, state: State = None, true_end: bool = False, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Заключение")
@@ -341,6 +341,7 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
     state="*"
 )
 @mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
 @mixin_state
 async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
     user = await repositories.UserRepository.get(alice.session.user_id)
@@ -431,6 +432,7 @@ async def handler_skip_question(alice: AliceRequest):
     state="*"
 )
 @mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
 @mixin_state
 async def handler_dont_know_answer(alice: AliceRequest, state: State, **kwargs):
     state.session.need_hint = True
@@ -548,7 +550,8 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
 # async def handler_answer_brute_force(alice: AliceRequest, state: State, **kwargs):
 #     logging.info(f"User: {alice.session.user_id}: Handler->Перебор ответов")
 
-
+@mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
 @mixin_state
 async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
     country_id = state.session.current_question
@@ -581,7 +584,8 @@ async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
         buttons=CONFIRM_BUTTONS_GROUP
     )
 
-
+@mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
 @mixin_state
 async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
     country_id = state.session.current_question
@@ -661,6 +665,7 @@ async def handler_fact_reject(alice: AliceRequest, **kwargs):
 
 @dp.request_handler(state="*")
 @mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
 @mixin_state
 async def handler_all(alice: AliceRequest, state: State):
     logging.info(f"User: {alice.session.user_id}: Handler->Общий обработчик")
