@@ -132,7 +132,7 @@ async def handler_close_game(alice: AliceRequest, text: str | None = None, **kwa
     filters.OneOfFilter(
         filters.EndFilter(),
         filters.AndFilter(
-            filters.SessionState(GameStates.QUESTION_TIME),
+            filters.SessionState(GameStates.SHOW_CARDS),
             filters.RejectFilter()
         )
     ),
@@ -316,10 +316,10 @@ async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
     return await handler_question(alice, state=state)
 
 
-@dp.request_handler(
-    filters.SessionState(GameStates.QUESTION_TIME),
-    state="*"
-)
+# @dp.request_handler(
+#     filters.SessionState(GameStates.QUESTION_TIME),  # NEVER REACH
+#     state="*"
+# )
 @mixin_appmetrica_log(dp)
 @mixin_can_repeat(dp, RepeatKey.QUESTION)
 @mixin_state
@@ -576,7 +576,7 @@ async def handler_fact_confirm(alice: AliceRequest, state: State, **kwargs):
 
     await dp.storage.set_state(
         alice.session.user_id,
-        state=GameStates.QUESTION_TIME,
+        state=GameStates.SHOW_CARDS,
         alice_state=state
     )
 
@@ -598,6 +598,14 @@ async def handler_fact_confirm(alice: AliceRequest, state: State, **kwargs):
 async def handler_fact_reject(alice: AliceRequest, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Отказ от факта")
     return await handler_show_cards(alice)
+
+
+@dp.request_handler(state="*")
+@mixin_appmetrica_log(dp)
+@mixin_state
+async def handler_all(alice: AliceRequest, state: State):
+    logging.info(f"User: {alice.session.user_id}: Handler->Общий обработчик")
+    return await handler_help(alice, state=state)
 
 
 @dp.errors_handler()
