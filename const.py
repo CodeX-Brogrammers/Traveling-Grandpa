@@ -90,3 +90,18 @@ DONT_KNOW = (
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/be98dfd0-1fbc-45cb-b60b-ed72b88bbe45.opus'>"
     )
 )
+
+MAYBE_ERROR = (
+    Text(
+        src="К сожалению, я не совсем понял, что ты имеешь ввиду. Скажи еще раз.",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/4b91bb06-da11-4035-a0f4-b5e7ae1161fc.opus'>"
+    ),
+    Text(
+        src="Кажется у меня проблемы со связью, я не расслышал что ты сказал. Можешь повторить?",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/9535888a-01d8-4131-a300-a2d2de888515.opus'>"
+    ),
+    Text(
+        src="Прости, но я не расслышал тебя. Пожалуйста, можешь повторить громче?",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/d982e409-f8aa-4b33-9e25-a4f6dadd9326.opus'>"
+    )
+)

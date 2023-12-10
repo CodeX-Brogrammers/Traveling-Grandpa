@@ -17,7 +17,8 @@ from const import (
     REPEAT_OR_CLOSE_BUTTONS_GROUP,
     HINT_DONT_NEED,
     INCORRECT_ANSWERS,
-    DONT_KNOW
+    DONT_KNOW,
+    MAYBE_ERROR
 )
 import repositories
 import filters
@@ -632,7 +633,11 @@ async def handler_fact_reject(alice: AliceRequest, **kwargs):
 @mixin_state
 async def handler_all(alice: AliceRequest, state: State):
     logging.info(f"User: {alice.session.user_id}: Handler->Общий обработчик")
-    return await handler_help(alice, state=state)
+    answer = choice(MAYBE_ERROR)
+    return await alice.response(
+        answer.src,
+        tts=answer.tts
+    )
 
 
 @dp.errors_handler()
