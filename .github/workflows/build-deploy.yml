@@ -52,7 +52,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} > ~/.ssh/known_hosts
 
       - name: connect and pull
-        run: ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "export REGISTRY_URL=${{ env.REGISTRY_URL }} && export REGISTRY_TAG=grandpa-${{ needs.publish.outputs.short_sha }} && cd ${{ secrets.WORK_DIR }} && docker-compose -f hub.docker-compose.yaml pull && docker-compose -f hub.docker-compose.yaml up -d && exit"
+        run: ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "export REGISTRY_URL=${{ env.REGISTRY_URL }} && export REGISTRY_TAG=grandpa-${{ needs.publish.outputs.short_sha }} && cd ${{ secrets.WORK_DIR }} && git pull && docker-compose -f hub.docker-compose.yaml pull && docker-compose -f hub.docker-compose.yaml up -d && exit"
         
       - name: cleanup
         run: rm -rf ~/.ssh
