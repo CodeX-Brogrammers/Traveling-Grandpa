@@ -4,4 +4,4 @@ pydantic-settings==2.1.0
 pymorphy2 @ git+https://github.com/pymorphy2-fork/pymorphy2@master
 pydantic~=2.5.2
 motor~=3.3.2
-aioredis==2.0.1
+redis[hiredis]==5.0.1

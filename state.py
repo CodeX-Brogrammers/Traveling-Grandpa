@@ -2,10 +2,10 @@ import enum
 from typing import Optional
 
 from aioalice.utils.helper import Helper, HelperMode, Item
-from aioalice.types import AliceRequest, AliceResponse
 from aioalice.dispatcher.storage import MemoryStorage
 from pydantic import BaseModel, conint, Field
-import aioredis
+from aioalice.types import AliceRequest
+from redis import asyncio as aioredis
 import orjson
 
 from settings import settings
