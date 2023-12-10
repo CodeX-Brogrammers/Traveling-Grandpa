@@ -10,9 +10,10 @@ from models import CardType
 class SessionState(BaseModel):
     selected_card: Optional[CardType] = None
     current_question: Optional[str] = None
-    question_passed: Optional[conint(ge=0)] = Field(0)
+    question_passed: Optional[conint(ge=0)] = Field(default=0)
     latest_hints: list[int] = Field(default_factory=list)
     try_count: int = 0
+    need_hint: bool = Field(default=False)
     state: str = "*"
 
 
@@ -36,6 +37,7 @@ class State(BaseModel):
     def clear_after_question(self) -> None:
         self.session.latest_hints = []
         self.session.try_count = 0
+        self.session.need_hint = False
 
 
 class GameStates(Helper):

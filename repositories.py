@@ -225,7 +225,8 @@ class CardRepository:
         models.CardType.ATTRACTIONS: Image(
             image_id="997614/8e4eda6eb11d49980d4d",
             title="Достопримечательности",
-            description="Достопримечательности",
+            description="Здесь вам предстоит увлекательное путешествие по всему миру, "
+                        "отгадывайте страны на основе их знаменитых архитектурных и природных чудес.",
             button=Button(
                 title="Достопримечательности",
                 payload={
@@ -236,7 +237,8 @@ class CardRepository:
         models.CardType.NATIONAL_DISHES: Image(
             image_id="1540737/f91ca46e2da86edffc96",
             title="Национальные блюда",
-            description="Национальные блюда",
+            description="Угадывайте страны, открывая для себя удивительное разнообразие мировой кухни и "
+                        "наслаждайтесь любимыми национальными блюдами из разных стран.",
             button=Button(
                 title="Национальные блюда",
                 payload={
@@ -247,7 +249,8 @@ class CardRepository:
         models.CardType.CULTURAL_FEATURES: Image(
             image_id="997614/6b6b4fb3948f86b612e8",
             title="Культурные особенности",
-            description="Культурные особенности",
+            description="Угадывайте страны, исследуя их традиции, праздники, "
+                        "исторические артефакты и другие интересные аспекты.",
             button=Button(
                 title="Культурные особенности",
                 payload={
@@ -258,7 +261,8 @@ class CardRepository:
         models.CardType.FACTS: Image(
             image_id="997614/6af22da7d2ef486a58e8",
             title="Факты о стране",
-            description="Факты о стране",
+            description="Здесь вам предстоит угадывать страны, "
+                        "исходя из удивительных фактов о их географии, культуре и истории.",
             button=Button(
                 title="Факты о стране",
                 payload={
@@ -269,7 +273,8 @@ class CardRepository:
         models.CardType.CREATIVITY: Image(
             image_id="1652229/06aa85c89296ea2dd776",
             title="Творчество",
-            description="Творчество",
+            description="Откройте для себя мир творчества, отгадывайте страны через их художественное"
+                        " наследие, литературные достижения и культурные выражения.",
             button=Button(
                 title="Творчество",
                 payload={
@@ -289,8 +294,7 @@ class CardRepository:
         for card_type in models.CardType:
             card = cls.CARDS[card_type]
             pass_count = cards_type_passed[card_type.name.lower()]
-            # if pass_count < countries_count:
-            if pass_count <= 2:
+            if pass_count < countries_count:
                 result.append(card)
 
         return result

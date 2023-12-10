@@ -14,13 +14,15 @@ from const import (
     GAME_BUTTONS_GROUP,
     CONFIRM_BUTTONS_GROUP,
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
-    REPEAT_OR_CLOSE_BUTTONS_GROUP
+    REPEAT_OR_CLOSE_BUTTONS_GROUP,
+    HINT_DONT_NEED,
+    INCORRECT_ANSWERS,
+    DONT_KNOW
 )
 import repositories
 import filters
 import schemes
 import models
-import nlu
 
 
 class HybridStorage(MemoryStorage):
@@ -50,8 +52,7 @@ async def handler_start(alice: AliceRequest, state: State, **kwargs):
         alice_state=state
     )
 
-    # TODO: Картинка для старта
-    answer = "Приём, приём... Как слышно? Это твой дедушка! и голосовой помощник Алеся!\n" \
+    answer = "Приём, приём... Как слышно? Это твой дедушка! и голосовой помощник Алиса!\n" \
              "Мы как всегда, отправились в удивительное путешествие...\n" \
              "Но в этот раз мне нужна твоя помощь!\n" \
              "Видишь, из-за моих бесконечных приключений я совсем забыл, как называются разные страны.\n" \
@@ -292,15 +293,15 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
         await repositories.UserRepository.clear_passed_cards(user)
         return await handler_end(alice, state=state, true_end=True)
 
-    # TODO: произнесение карточек
-    tts = extra_text if extra_text else "Выберите одну из карт"
+    tts = "Выберите одну из карточек"
     tts = "\n".join([
         tts,
         *[card.title for card in cards]
     ])
+
     return alice.response_items_list(
-        text=extra_text if extra_text else "Выберите одну из карт",
-        header="Выберите одну из карт",
+        text=extra_text if extra_text else "Выберите одну из карточек",  # Не отображается
+        header="Выберите одну из карточек",
         items=cards,
         buttons=REPEAT_OR_CLOSE_BUTTONS_GROUP,
         tts=tts
@@ -402,9 +403,15 @@ async def handler_skip_question(alice: AliceRequest):
     state="*"
 )
 @mixin_appmetrica_log(dp)
-async def handler_dont_know_answer(alice: AliceRequest):
-    text = "Мы многого не знаем, попробуйте взять подсказку или перейдите на следующий вопрос. "
-    return alice.response(text, buttons=GAME_BUTTONS_GROUP)
+@mixin_state
+async def handler_dont_know_answer(alice: AliceRequest, state: State, **kwargs):
+    state.session.need_hint = True
+    text = choice(DONT_KNOW)
+    return alice.response(
+        text.src,
+        tts=text.tts,
+        buttons=GAME_BUTTONS_GROUP
+    )
 
 
 @dp.request_handler(
@@ -469,7 +476,7 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
     )
 
     if country is None:
-        pass
+        return await handler_end(alice, state=state)
 
     print(f"{country=}")
     possible_answers = [schemes.AnswerWithIndex(index=0, text=name) for name in country.alternatives]
@@ -479,6 +486,21 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
     )])
 
     if result is None:
+        if state.session.need_hint:
+            # Когда пользователь соглашается на подсказку после неверного ответа
+            if filters.ConfirmFilter().check(alice):
+                state.session.need_hint = False
+                return await handler_hint(alice, state=state)
+
+            # Когда пользователь не соглашается на подсказку после неверного ответа
+            elif filters.RejectFilter().check(alice):
+                state.session.need_hint = False
+                answer: schemes.Text = choice(HINT_DONT_NEED)
+                return alice.response(
+                    answer.src,
+                    tts=answer.tts
+                )
+
         return await handler_false_answer(alice, state=state)
 
     first_country: Diff = result[0]
@@ -541,6 +563,7 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
     answer = card.answers.incorrect
 
     state.session.try_count += 1
+    state.session.need_hint = True
 
     if state.session.try_count >= 3:
         await dp.storage.set_state(
@@ -548,9 +571,11 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
             GameStates.FACT,
             alice_state=state
         )
-        country_name = country.name
+        answer = choice(INCORRECT_ANSWERS)
+
         return alice.response(
-            f"Ты не угадал, это был {country_name}. Хочешь послушать интересный факт ?",
+            answer.src,
+            tts=answer.tts,
             buttons=CONFIRM_BUTTONS_GROUP
         )
 
