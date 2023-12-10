@@ -14,7 +14,8 @@ def mixin_can_repeat(dp: Dispatcher, key: RepeatKey = None):
         async def wrapper(alice: AliceRequest, *args, **kwargs):
             nonlocal dp, key
             response = await func(alice, *args, **kwargs)
-            data = {"last": response, "last_func": func.__name__}
+            data = await dp.storage.get_data(alice.session.user_id)
+            data |= {"last": response, "last_func": func.__name__}
             if key:
                 data[key] = response
 

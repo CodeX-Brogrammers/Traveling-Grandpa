@@ -5,20 +5,22 @@ from aioalice.dispatcher.storage import MemoryStorage
 from aioalice.types import AliceRequest, Image
 from aioalice import Dispatcher
 
+import nlu
 from nlu.cases import check_user_answer, SelectCardHandler, QuessAnswerHandler
 from mixin import mixin_appmetrica_log, mixin_can_repeat, mixin_state
 from state import State, GameStates
 from schemes import RepeatKey, Diff
 from const import (
-    MENU_BUTTONS_GROUP,
-    GAME_BUTTONS_GROUP,
-    CONFIRM_BUTTONS_GROUP,
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
     REPEAT_OR_CLOSE_BUTTONS_GROUP,
-    HINT_DONT_NEED,
+    CONFIRM_BUTTONS_GROUP,
+    MENU_BUTTONS_GROUP,
+    ALL_HINTS_IS_TAKES,
+    GAME_BUTTONS_GROUP,
     INCORRECT_ANSWERS,
-    DONT_KNOW,
-    MAYBE_ERROR
+    HINT_DONT_NEED,
+    MAYBE_ERROR,
+    DONT_KNOW
 )
 import repositories
 import filters
@@ -180,8 +182,19 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
 @mixin_appmetrica_log(dp)
 @mixin_state
 async def handler_repeat(alice: AliceRequest, state: State):
-    # TODO: Сделать повторение
-    return alice.response("Повторять нечего")
+    data = await dp.storage.get_data(alice.session.user_id)
+
+    if state.current == GameStates.GUESS_ANSWER and nlu.calculate_coincidence(
+            input_tokens=nlu.lemmatize(nlu.tokenizer(alice.request.command)),
+            source_tokens=nlu.lemmatize(["вопрос"])
+    ) >= 1.0:
+        logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Вопрос")
+        if response := data.get(RepeatKey.QUESTION, None):
+            return response
+
+    logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Последний ответ")
+    response = data.get("last", alice.response("Мне нечего повторять"))
+    return response
 
 
 @dp.request_handler(filters.CanDoFilter(), state="*")
@@ -195,9 +208,23 @@ async def handler_can_do(alice: AliceRequest, state: State, **kwargs):
              "Узнай интересные факты, побывай в красивых местах и проникнись атмосферой " \
              "других стран вместе с дедушкой путешественником."
     # TODO: tts
+    buttons = []
+    match state.current:
+        case GameStates.GUESS_ANSWER | GameStates.FACT | GameStates.QUESTION_TIME:
+            buttons.extend(GAME_BUTTONS_GROUP)
+
+        case GameStates.SELECT_CARD:
+            buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
+
+        case GameStates.END:
+            buttons.extend(NEW_OR_CLOSE_GAME_BUTTONS_GROUP)
+
+        case _:
+            buttons.extend(MENU_BUTTONS_GROUP)
+
     return alice.response(
         answer,
-        buttons=MENU_BUTTONS_GROUP
+        buttons=buttons
     )
 
 
@@ -426,13 +453,6 @@ async def handler_dont_know_answer(alice: AliceRequest, state: State, **kwargs):
 async def handler_hint(alice: AliceRequest, state: State, **kwargs):
     country_id = state.session.current_question
 
-    if len(state.session.latest_hints) >= 3:
-        # TODO: Повторение подсказок
-        return alice.response(
-            "Извини, ты получил все подсказки об этой стране.",
-            buttons=GAME_BUTTONS_GROUP
-        )
-
     country: models.CountryHints = await repositories.CountryRepository.get_hints(
         country_id=country_id
     )
@@ -452,7 +472,18 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
         break
 
     if hint is None:
-        return alice.response("Извини, ты получил все подсказки об этой стране")
+        answer = choice(ALL_HINTS_IS_TAKES)
+        text = "\n".join([
+            answer.src, *[hint.text.src for hint in hints]
+        ])
+        tts = "\n".join([
+            answer.tts, *[hint.text.tts for hint in hints]
+        ])
+        return alice.response(
+            text,
+            tts=tts,
+            buttons=GAME_BUTTONS_GROUP
+        )
 
     return alice.response(
         hint.text.src,
@@ -644,4 +675,4 @@ async def handler_all(alice: AliceRequest, state: State):
 @mixin_appmetrica_log(dp)
 async def the_only_errors_handler(alice, e):
     logging.error('An error!', exc_info=e)
-    return alice.response('Кажется что-то пошло не так. ')
+    return await handler_all(alice)

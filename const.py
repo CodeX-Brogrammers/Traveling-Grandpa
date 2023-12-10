@@ -24,7 +24,7 @@ MENU_BUTTONS_GROUP = [
     YOU_CAN_BUTTON_MENU,
     CLOSE_BUTTON_MENU,
 ]
-GAME_BUTTONS_GROUP = [HINT_BUTTON, NEXT_BUTTON, HELP_BUTTON, CLOSE_BUTTON]
+GAME_BUTTONS_GROUP = [HINT_BUTTON, REPEAT_BUTTON, NEXT_BUTTON, HELP_BUTTON, CLOSE_BUTTON]
 CONFIRM_BUTTONS_GROUP = [OK_BUTTON, REJECT_BUTTON]
 NEW_OR_CLOSE_GAME_BUTTONS_GROUP = [NEW_GAME_BUTTON_MENU, CLOSE_BUTTON_MENU]
 REPEAT_OR_CLOSE_BUTTONS_GROUP = [REPEAT_BUTTON, CLOSE_BUTTON]
@@ -104,4 +104,10 @@ MAYBE_ERROR = (
         src="Прости, но я не расслышал тебя. Пожалуйста, можешь повторить громче?",
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/d982e409-f8aa-4b33-9e25-a4f6dadd9326.opus'>"
     )
+)
+
+ALL_HINTS_IS_TAKES = (
+    Text(
+        src="Извини, ты получил все подсказки об этой стране. Повторю их все ещё раз."
+    ),
 )
