@@ -83,8 +83,8 @@ def check_user_answer(alice: AliceRequest, handlers: list["BaseHandler"]) -> Any
 
 class BaseHandler:
     def __init__(self, answers: list[AnswerWithIndex]):
-        self.alice = None
-        self.answers = answers
+        self.alice: AliceRequest | None = None
+        self.answers: list[AnswerWithIndex] = answers
 
     def set_alice(self, alice: AliceRequest):
         self.alice = alice
@@ -120,10 +120,17 @@ class SelectCardHandler(BaseHandler):
     def button(self) -> CardType:
         return CardType(self.alice.request.payload["selected_card"])
 
+    def intent(self) -> CardType:
+        intents: dict = self.alice.request.nlu._raw_kwargs["intents"]
+        card_entity: dict = intents["CardType"]
+        card_type: str = card_entity["slots"]["card_type"]["value"]
+        return CardType(card_type)
+
     def execute(self) -> list[Diff] | CardType | None:
         if self.alice.request.type == "ButtonPressed":
             return self.button()
-
+        elif self.alice.request.nlu._raw_kwargs.get("intents", {}).get("CardType", None):
+            return self.intent()
         return self.text(exclude_tokens=["о"])
 
 

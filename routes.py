@@ -298,7 +298,7 @@ async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
     if result is None or len(result) == 0:
         return await handler_show_cards(alice, state=state, extra_text="Не слышу, повтори ещё раз")
 
-    if alice.request.type == "SimpleUtterance":
+    if isinstance(result, list):
         answer: Diff = result[0]
         state.session.selected_card = models.CardType(answer.answer)
     else:

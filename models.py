@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Any
 import enum
 
 from beanie import Document, Indexed, init_beanie, PydanticObjectId
@@ -15,6 +15,18 @@ class CardType(str, enum.Enum):
     CULTURAL_FEATURES = "Культурные особенности"
     FACTS = "Факты о стране"
     CREATIVITY = "Творчество"
+
+    @classmethod
+    def _missing_(cls, value: str | Any) -> "CardType":
+        if not isinstance(value, str):
+            raise ValueError(f"Only the string is allowed, given type: {type(value)}")
+
+        const_names_map = cls._member_map_
+        value = value.upper()
+        if card := const_names_map.get(value, None):
+            return card
+
+        raise ValueError(f"Name: {value} not found")
 
 
 class CardAnswer(BaseModel):
