@@ -17,7 +17,7 @@ def mixin_can_repeat(dp: Dispatcher, key: RepeatKey = None):
             data = await dp.storage.get_data(alice.session.user_id)
             data |= {"last": response, "last_func": func.__name__}
             if key:
-                data[key] = response
+                data[key.value] = response
 
             await dp.storage.set_data(
                 alice.session.user_id, data
@@ -46,7 +46,8 @@ def mixin_state(func: Callable):
         data = await func(alice, *args, **kwargs)
         if isinstance(data, dict):
             temp = data.copy()
-            temp.pop("analytics")
+            if temp.get("analytics"):
+                temp.pop("analytics")
             response = AliceResponse(**temp)
         else:
             response = data
@@ -80,6 +81,7 @@ def mixin_appmetrica_log(dp: Dispatcher):
             response: AliceResponse = await func(alice, *args, **kwargs)
             if isinstance(response, AliceResponse):
                 response: dict = response.to_json()
+
             analytics = {
                 "events": [
                     {

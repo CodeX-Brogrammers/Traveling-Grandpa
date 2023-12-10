@@ -1,14 +1,12 @@
 from random import choice
 import logging
 
-from aioalice.dispatcher.storage import MemoryStorage
-from aioalice.types import AliceRequest, Image
+from aioalice.types import AliceRequest, Image, AliceResponse
 from aioalice import Dispatcher
 
-import nlu
 from nlu.cases import check_user_answer, SelectCardHandler, QuessAnswerHandler
 from mixin import mixin_appmetrica_log, mixin_can_repeat, mixin_state
-from state import State, GameStates
+from state import State, GameStates, HybridStorage
 from schemes import RepeatKey, Diff
 from const import (
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
@@ -26,18 +24,7 @@ import repositories
 import filters
 import schemes
 import models
-
-
-class HybridStorage(MemoryStorage):
-    async def get_state(self, user_id, state: State = None):
-        if state is None:
-            return super().get_state(user_id)
-        return state.current
-
-    async def set_state(self, user_id, state: str, alice_state: State = None):
-        if alice_state is None:
-            return super().set_state(user_id, state)
-        alice_state.session.state = state
+import nlu
 
 
 dp = Dispatcher(storage=HybridStorage())
@@ -183,17 +170,25 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
 @mixin_state
 async def handler_repeat(alice: AliceRequest, state: State):
     data = await dp.storage.get_data(alice.session.user_id)
-    logging.info(f"{data=}")
+
     if state.current == GameStates.GUESS_ANSWER and nlu.calculate_coincidence(
             input_tokens=nlu.lemmatize(nlu.tokenizer(alice.request.command)),
             source_tokens=nlu.lemmatize(["вопрос"])
     ) >= 1.0:
         logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Вопрос")
-        if response := data.get(RepeatKey.QUESTION, None):
+        if response := data.get(RepeatKey.QUESTION.value, None):
             return response
 
     logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Последний ответ")
-    response = data.get("last", alice.response("Мне нечего повторять"))
+    response_data = data.get("last", alice.response("Мне нечего повторять"))
+    response = AliceResponse(
+        response=response_data.get("response"),
+        session=response_data.get("session"),
+        session_state=response_data.get("session_state"),
+        user_state_update=response_data.get("user_state_update"),
+        application_state=response_data.get("application_state"),
+        version=response_data.get("version")
+    )
     return response
 
 
@@ -680,4 +675,4 @@ async def handler_all(alice: AliceRequest, state: State):
 @mixin_appmetrica_log(dp)
 async def the_only_errors_handler(alice, e):
     logging.error('An error!', exc_info=e)
-    return await handler_all(alice)
+    return alice.response('Кажется что-то пошло не так. ')

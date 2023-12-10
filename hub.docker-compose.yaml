@@ -9,8 +9,16 @@ services:
     environment:
       - MONGODB_URL=mongodb://mongodb:27017
       - URL_PATH=${URL_PATH}
+      - REDIS_URL=redis://redis:6379
+      - REDIS_ENABLE=true
     ports:
       - '${PORT}:3000'
+
+  redis:
+    image: redis:7.2.3-alpine3.19
+    restart: unless-stopped
+    volumes:
+      - cache:/data
 
   mongodb:
     image: mongo:6.0.12
@@ -19,3 +27,7 @@ services:
       - ./data/mongo:/data/db
     ports:
       - '${MONGODB_EXTERNAL_PORT}:27017'
+
+volumes:
+  cache:
+    driver: local

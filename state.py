@@ -1,9 +1,14 @@
+import enum
 from typing import Optional
 
 from aioalice.utils.helper import Helper, HelperMode, Item
+from aioalice.types import AliceRequest, AliceResponse
+from aioalice.dispatcher.storage import MemoryStorage
 from pydantic import BaseModel, conint, Field
-from aioalice.types import AliceRequest
+import aioredis
+import orjson
 
+from settings import settings
 from models import CardType
 
 
@@ -51,3 +56,60 @@ class GameStates(Helper):
     FACT = Item()  # Выбор ответов
     HINT = Item()  # Подсказка
     END = Item()  # Завершение
+
+
+def json_deserialization(obj):
+    if any([
+        "Alice" in str(type(obj)),
+        "Card" in str(type(obj)),
+        "Image" in str(type(obj)),
+        "Button" in str(type(obj)),
+    ]):
+        return obj.to_json()
+    elif isinstance(obj, enum.Enum):
+        return obj.value
+    raise TypeError
+
+
+class HybridStorage(MemoryStorage):
+    def __init__(self):
+        self.redis: aioredis.Redis | None = None
+        if settings.redis_enable:
+            self.redis: aioredis.Redis = aioredis.from_url(url=settings.redis_url)
+
+        super().__init__()
+
+    async def _get_user_data(self, user_id):
+        if self.redis:
+            data = await self.redis.get(user_id)
+            data = orjson.loads(data)
+            if not data:
+                data = {}
+                await self.redis.set(user_id, "{}")
+
+            return data
+
+        if user_id not in self.data:
+            self.data[user_id] = {}
+        return self.data[user_id]
+
+    async def get_data(self, user_id):
+        user = await self._get_user_data(user_id)
+        return user
+
+    async def set_data(self, user_id, data):
+        userdata = await self._get_user_data(user_id)
+        userdata.update(data)
+        userdata = orjson.dumps(userdata, default=json_deserialization)
+        if self.redis:
+            await self.redis.set(user_id, userdata)
+
+    async def get_state(self, user_id, state: State = None):
+        if state is None:
+            return super().get_state(user_id)
+        return state.current
+
+    async def set_state(self, user_id, state: str, alice_state: State = None):
+        if alice_state is None:
+            return super().set_state(user_id, state)
+        alice_state.session.state = state
