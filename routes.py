@@ -181,6 +181,10 @@ async def handler_repeat(alice: AliceRequest, state: State):
 
     logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Последний ответ")
     response_data = data.get("last", alice.response("Мне нечего повторять"))
+    if not isinstance(response_data, dict):
+        response = response_data
+        return response
+
     response = AliceResponse(
         response=response_data.get("response"),
         session=response_data.get("session"),
