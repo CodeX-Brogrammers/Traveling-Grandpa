@@ -11,7 +11,6 @@ class SessionState(BaseModel):
     selected_card: Optional[CardType] = None
     current_question: Optional[str] = None
     question_passed: Optional[conint(ge=0)] = Field(0)
-    number_of_hints: int = 5
     latest_hints: list[int] = Field(default_factory=list)
     try_count: int = 0
     state: str = "*"

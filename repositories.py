@@ -1,8 +1,9 @@
+from aioalice.types import Image, Button
 from beanie import PydanticObjectId
 from pydantic import BaseModel
 
-import schemes
 import models
+import schemes
 
 
 class CountryRepository:
@@ -23,7 +24,9 @@ class CountryRepository:
         )
     
     @staticmethod
-    async def get_card_with_names(country_id: str | PydanticObjectId, card_type: models.CardType) -> models.CountryShortView | None:
+    async def get_card_with_names(
+            country_id: str | PydanticObjectId, card_type: models.CardType
+    ) -> models.CountryShortView | None:
         country = await models.Country.aggregate([
             {
                 "$unwind": "$cards"
@@ -73,6 +76,15 @@ class CountryRepository:
             return country[0]
         return None
 
+    @staticmethod
+    async def count() -> int:
+        country = await models.Country.aggregate([
+            {"$count": "count"}
+        ]).to_list()
+        if country:
+            return country[0]["count"]
+        return 0
+
 
 class UserRepository:
 
@@ -101,6 +113,34 @@ class UserRepository:
         }
         cards = card_type_map[card_type]
         return [PydanticObjectId(card) for card in cards]
+
+    @classmethod
+    async def get_passed_cards_count(
+            cls,
+            user: models.UserData
+    ) -> schemes.PassedCardCountView | None:
+        result = await models.UserData.aggregate([
+                {
+                    '$match': {
+                        'user_id': user.user_id
+                    }
+                }
+        ], projection_model=schemes.PassedCardCountView).to_list()
+        if result:
+            return result[0]
+        return None
+
+    @classmethod
+    async def clear_passed_cards(
+            cls,
+            user: models.UserData
+    ) -> None:
+        user.passed_cards.attractions = set()
+        user.passed_cards.national_dishes = set()
+        user.passed_cards.cultural_features = set()
+        user.passed_cards.facts = set()
+        user.passed_cards.creativity = set()
+        await user.save()
 
     @classmethod
     async def add_passed_country_card(
@@ -180,6 +220,92 @@ class UserRepository:
         return None
 
 
+class CardRepository:
+    CARDS = {
+        models.CardType.ATTRACTIONS: Image(
+            image_id="997614/8e4eda6eb11d49980d4d",
+            title="Достопримечательности",
+            description="Достопримечательности",
+            button=Button(
+                title="Достопримечательности",
+                payload={
+                    "selected_card": models.CardType.ATTRACTIONS
+                }
+            )
+        ),
+        models.CardType.NATIONAL_DISHES: Image(
+            image_id="1540737/f91ca46e2da86edffc96",
+            title="Национальные блюда",
+            description="Национальные блюда",
+            button=Button(
+                title="Национальные блюда",
+                payload={
+                    "selected_card": models.CardType.NATIONAL_DISHES
+                }
+            )
+        ),
+        models.CardType.CULTURAL_FEATURES: Image(
+            image_id="997614/6b6b4fb3948f86b612e8",
+            title="Культурные особенности",
+            description="Культурные особенности",
+            button=Button(
+                title="Культурные особенности",
+                payload={
+                    "selected_card": models.CardType.CULTURAL_FEATURES
+                }
+            )
+        ),
+        models.CardType.FACTS: Image(
+            image_id="997614/6af22da7d2ef486a58e8",
+            title="Факты о стране",
+            description="Факты о стране",
+            button=Button(
+                title="Факты о стране",
+                payload={
+                    "selected_card": models.CardType.FACTS
+                }
+            )
+        ),
+        models.CardType.CREATIVITY: Image(
+            image_id="1652229/06aa85c89296ea2dd776",
+            title="Творчество",
+            description="Творчество",
+            button=Button(
+                title="Творчество",
+                payload={
+                    "selected_card": models.CardType.CREATIVITY
+                }
+            )
+        )
+    }
+
+    @classmethod
+    async def get(cls, user: models.UserData) -> list[Image]:
+        countries_count: int = await CountryRepository.count()
+        cards_type_passed: schemes.PassedCardCountView = await UserRepository.get_passed_cards_count(user)
+        cards_type_passed: dict = cards_type_passed.model_dump()
+
+        result = []
+        for card_type in models.CardType:
+            card = cls.CARDS[card_type]
+            pass_count = cards_type_passed[card_type.name.lower()]
+            # if pass_count < countries_count:
+            if pass_count <= 2:
+                result.append(card)
+
+        return result
+
+    @staticmethod
+    def calculate_answers_with_index(cards: list[Image]) -> list[schemes.AnswerWithIndex]:
+        result = []
+        for index, card in enumerate(cards, start=1):
+            result.append(schemes.AnswerWithIndex(
+                index=index,
+                text=models.CardType(card.title).value
+            ))
+        return result
+
+
 if __name__ == '__main__':
     # aggregate
     # sort by score asc
@@ -189,10 +315,13 @@ if __name__ == '__main__':
     async def test():
         await models.init_database()
 
-        user_id = "user-943"
+        user_id = "0949EEBA2D0E3A59ED6052A46EFC046E6CD43719F826539F1137AED6A7383B09"
         user = await UserRepository.get(user_id)
-        rank = await UserRepository.get_rank(user)
-        print(rank)
+        cards = await CardRepository.get(user)
+        answers = CardRepository.calculate_answers_with_index(cards)
+        print(answers)
+        # rank = await UserRepository.get_rank(user)
+        # print(rank)
 
         # country_id = "6573288a542482462bcdfb8a"
         # await UserRepository.add_passed_country_card(user, country_id, models.CardType.ATTRACTIONS)

@@ -10,7 +10,7 @@ from settings import settings
 
 
 class CardType(str, enum.Enum):
-    ATTRACTIONS = "Достопримечательность"
+    ATTRACTIONS = "Достопримечательности"
     NATIONAL_DISHES = "Национальные блюда"
     CULTURAL_FEATURES = "Культурные особенности"
     FACTS = "Факты о стране"
@@ -61,7 +61,12 @@ class CountryShortView(BaseModel):
     name: str
 
     class Settings:
-        projection = {"_id": 1, "alternatives": 1, "card": "$cards", "name": 1}
+        projection = {
+            "_id": 1,
+            "alternatives": 1,
+            "card": "$cards",
+            "name": 1
+        }
 
 
 class CountryFacts(BaseModel):

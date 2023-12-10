@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 import enum
 
+from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -50,3 +51,21 @@ class Image(BaseModel):
 class AnswerWithIndex(BaseModel):
     index: int | None = Field(None)
     text: str | Text = Field(...)
+
+
+class PassedCardCountView(BaseModel):
+    attractions: int
+    national_dishes: int
+    cultural_features: int
+    facts: int
+    creativity: int
+
+    class Settings:
+        projection = {
+            "_id": 0,
+            "attractions": {"$size": "$passed_cards.attractions"},
+            "national_dishes": {"$size": "$passed_cards.national_dishes"},
+            "cultural_features": {"$size": "$passed_cards.cultural_features"},
+            "facts": {"$size": "$passed_cards.facts"},
+            "creativity": {"$size": "$passed_cards.creativity"}
+        }

@@ -2,7 +2,7 @@ from random import choice
 import logging
 
 from aioalice.dispatcher.storage import MemoryStorage
-from aioalice.types import AliceRequest
+from aioalice.types import AliceRequest, Image
 from aioalice import Dispatcher
 
 from nlu.cases import check_user_answer, SelectCardHandler, QuessAnswerHandler
@@ -12,8 +12,6 @@ from schemes import RepeatKey, Diff
 from const import (
     MENU_BUTTONS_GROUP,
     GAME_BUTTONS_GROUP,
-    SELECT_CARDS,
-    SELECT_CARDS_ANSWERS,
     CONFIRM_BUTTONS_GROUP,
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
     REPEAT_OR_CLOSE_BUTTONS_GROUP
@@ -61,7 +59,7 @@ async def handler_start(alice: AliceRequest, state: State, **kwargs):
 
     return alice.response_big_image(
         answer,
-        tts='<speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/e9edf4de-ae29-44b2-a851-a3e9d39590d2.opus"> и голосовой помощник Алеся !'\
+        tts='<speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/e9edf4de-ae29-44b2-a851-a3e9d39590d2.opus"> и голосовой помощник Алеся !' \
             '<speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/e6b057c3-0ffa-453b-b56b-84e26e3844fd.opus">' \
             '',
         image_id="1652229/066bed1b217f0e2c894a",
@@ -141,11 +139,14 @@ async def handler_close_game(alice: AliceRequest, text: str | None = None, **kwa
 @mixin_can_repeat(dp)
 @mixin_appmetrica_log(dp)
 @mixin_state
-async def handler_end(alice: AliceRequest, state: State = None, **kwargs):
+async def handler_end(alice: AliceRequest, state: State = None, true_end: bool = False, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Заключение")
-    text = "Понимаю, что у тебя свои дела и обязанности, и я ценю всю помощь, что ты уже мне предоставил.\n" \
-           "Не переживай, я продолжу мое увлекательное путешествие и поделюсь новостями, когда ты вернёшься.\n" \
-           "\n"
+
+    if true_end:
+        text = "Поздравляем, ты отгадали все страны, где мы побывали 🎉"
+    else:
+        text = "Понимаю, что у тебя свои дела и обязанности, и я ценю всю помощь, что ты уже мне предоставил.\n" \
+               "Не переживай, я продолжу мое увлекательное путешествие и поделюсь новостями, когда ты вернёшься."
 
     if state.current == GameStates.START:
         return await handler_close_game(alice, text=text)
@@ -155,9 +156,9 @@ async def handler_end(alice: AliceRequest, state: State = None, **kwargs):
     global_score = await repositories.UserRepository.increase_global_score(user)
     rank = await repositories.UserRepository.get_rank(user)
 
-    text += f"За игру вы заработали {score} очков.\n" \
-            f"Общее количество очков: {global_score}.\n" \
-            f"Вы занимаете {rank} место в рейтинге. Желаете начать заново?"
+    text += f"\nЗа игру вы заработали {score} очков." \
+            f"\nОбщее количество очков: {global_score}." \
+            f"\nВы занимаете {rank} место в рейтинге. Желаете начать заново?"
 
     state.clear_after_question()
     await dp.storage.set_state(
@@ -210,7 +211,6 @@ async def handler_help(alice: AliceRequest, state: State, **kwargs):
     match state.current:
         case GameStates.GUESS_ANSWER | GameStates.FACT | GameStates.QUESTION_TIME:
             answer += "Подсказка\n" \
-                      "Сколько осталось подсказок ?\n" \
                       "Следующий вопрос\n" \
                       "Повтори\n" \
                       "Завершить игру"
@@ -285,12 +285,25 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
         alice_state=state
     )
 
-    # TODO: Переделать картинки для карточек
+    user = await repositories.UserRepository.get(alice.session.user_id)
+    cards: list[Image] = await repositories.CardRepository.get(user)
+
+    if not cards:
+        await repositories.UserRepository.clear_passed_cards(user)
+        return await handler_end(alice, state=state, true_end=True)
+
+    # TODO: произнесение карточек
+    tts = extra_text if extra_text else "Выберите одну из карт"
+    tts = "\n".join([
+        tts,
+        *[card.title for card in cards]
+    ])
     return alice.response_items_list(
         text=extra_text if extra_text else "Выберите одну из карт",
         header="Выберите одну из карт",
-        items=SELECT_CARDS,
-        buttons=REPEAT_OR_CLOSE_BUTTONS_GROUP
+        items=cards,
+        buttons=REPEAT_OR_CLOSE_BUTTONS_GROUP,
+        tts=tts
     )
 
 
@@ -301,9 +314,14 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
 @mixin_appmetrica_log(dp)
 @mixin_state
 async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
+    user = await repositories.UserRepository.get(alice.session.user_id)
+    cards = await repositories.CardRepository.get(user)
+    answers = repositories.CardRepository.calculate_answers_with_index(cards)
+
     result = check_user_answer(alice, [
-        SelectCardHandler(SELECT_CARDS_ANSWERS)
+        SelectCardHandler(answers)
     ])
+
     if result is None or len(result) == 0:
         return await handler_show_cards(alice, state=state, extra_text="Не слышу, повтори ещё раз")
 
@@ -399,22 +417,8 @@ async def handler_dont_know_answer(alice: AliceRequest):
 @mixin_state
 async def handler_hint(alice: AliceRequest, state: State, **kwargs):
     country_id = state.session.current_question
-    user_tokens = nlu.lemmatize(alice.request.nlu.tokens)
-    if state.session.number_of_hints <= 0:
-        return alice.response(
-            "Извини, у тебя больше нет подсказок",
-            buttons=GAME_BUTTONS_GROUP
-        )
 
-    elif any([value in user_tokens for value in ("сколько", "остаться", "количество")]):
-        hints_count = state.session.number_of_hints
-        hints_count_text = nlu.declension_of_word_after_numeral('подсказка', hints_count)
-        return alice.response(
-            f"У тебя осталось {hints_count} {hints_count_text}.",
-            buttons=GAME_BUTTONS_GROUP
-        )
-
-    elif len(state.session.latest_hints) >= 3:
+    if len(state.session.latest_hints) >= 3:
         # TODO: Повторение подсказок
         return alice.response(
             "Извини, ты получил все подсказки об этой стране.",
@@ -442,7 +446,6 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
     if hint is None:
         return alice.response("Извини, ты получил все подсказки об этой стране")
 
-    state.session.number_of_hints -= 1
     return alice.response(
         hint.text.src,
         tts=hint.text.tts,
@@ -505,7 +508,6 @@ async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
     await repositories.UserRepository.increase_score(
         user, 5 - try_count - bool(latest_hints)
     )
-
     country: models.CountryShortView = await repositories.CountryRepository.get_card_with_names(
         country_id=country_id,
         card_type=selected_card
