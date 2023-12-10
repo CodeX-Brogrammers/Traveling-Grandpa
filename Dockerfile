@@ -1,4 +1,4 @@
-FROM python:3.10.13-alpine as builder
+FROM python:3.11.7-alpine as builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN apk add --no-cache git
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt gunicorn
 
 
-FROM python:3.10.13-alpine
+FROM python:3.11.7-alpine
 
 WORKDIR /app
 

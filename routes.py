@@ -183,7 +183,7 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
 @mixin_state
 async def handler_repeat(alice: AliceRequest, state: State):
     data = await dp.storage.get_data(alice.session.user_id)
-
+    logging.info(f"{data=}")
     if state.current == GameStates.GUESS_ANSWER and nlu.calculate_coincidence(
             input_tokens=nlu.lemmatize(nlu.tokenizer(alice.request.command)),
             source_tokens=nlu.lemmatize(["вопрос"])
