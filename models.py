@@ -2,10 +2,8 @@ from typing import Any
 import enum
 
 from beanie import Document, Indexed, init_beanie, PydanticObjectId
-from aioalice.dispatcher.storage import MemoryStorage
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, conlist, Field
-import aioredis
 
 from schemes import Image, Text
 from settings import settings
