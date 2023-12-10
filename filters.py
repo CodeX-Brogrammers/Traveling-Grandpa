@@ -98,7 +98,7 @@ class AndFilter(AsyncFilter):
         result = []
         for filter in self.filters:
             result.append(await check_filter(filter, (alice,)))
-        return all([result])
+        return all(result)
 
 
 class SessionState(Filter):

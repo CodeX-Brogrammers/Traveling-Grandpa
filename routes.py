@@ -128,7 +128,16 @@ async def handler_close_game(alice: AliceRequest, text: str | None = None, **kwa
     )
 
 
-@dp.request_handler(filters.EndFilter(), state="*")
+@dp.request_handler(
+    filters.OneOfFilter(
+        filters.EndFilter(),
+        filters.AndFilter(
+            filters.SessionState(GameStates.QUESTION_TIME),
+            filters.RejectFilter()
+        )
+    ),
+    state="*"
+)
 @mixin_can_repeat(dp)
 @mixin_appmetrica_log(dp)
 @mixin_state
