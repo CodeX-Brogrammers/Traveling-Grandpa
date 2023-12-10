@@ -41,6 +41,7 @@ async def handler_start(alice: AliceRequest, state: State, **kwargs):
         GameStates.START,
         alice_state=state
     )
+    await dp.storage.reset_data(alice.session.user_id)
 
     answer = "Приём, приём... Как слышно? Это твой дедушка! и голосовой помощник Алиса!\n" \
              "Мы как всегда, отправились в удивительное путешествие...\n" \
