@@ -14,6 +14,7 @@ from const import (
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
     REPEAT_OR_CLOSE_BUTTONS_GROUP,
     CONTINUE_ANYTHING_ELSE_MOMENT,
+    INCORRECT_ANSWERS_COUNTRY,
     END_ANYTHING_ELSE_MOMENT,
     CONFIRM_BUTTONS_GROUP,
     MENU_BUTTONS_GROUP,
@@ -629,13 +630,16 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
             GameStates.FACT,
             alice_state=state
         )
+        # TODO: Тут должен быть answer.incorrect
         answer = choice(INCORRECT_ANSWERS)
-
+        country_text = INCORRECT_ANSWERS_COUNTRY[country.name]
         return alice.response(
-            answer.src,
-            tts=answer.tts,
+            "\n".join([country_text.src, answer.src]),
+            tts="\n".join([country_text.tts, answer.tts]),
             buttons=CONFIRM_BUTTONS_GROUP
         )
+
+    # TODO: А тут INCORRECT_ANSWERS
 
     return alice.response(
         answer.src,
