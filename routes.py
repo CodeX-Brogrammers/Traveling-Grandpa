@@ -9,8 +9,12 @@ from mixin import mixin_appmetrica_log, mixin_can_repeat, mixin_state
 from state import State, GameStates, HybridStorage
 from schemes import RepeatKey, Diff
 from const import (
+    DONT_KNOW, FACT_ANYTHING_ELSE_MOMENT,
+    SELECT_CARD_ANYTHING_ELSE_MOMENT,
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
     REPEAT_OR_CLOSE_BUTTONS_GROUP,
+    CONTINUE_ANYTHING_ELSE_MOMENT,
+    END_ANYTHING_ELSE_MOMENT,
     CONFIRM_BUTTONS_GROUP,
     MENU_BUTTONS_GROUP,
     ALL_HINTS_IS_TAKES,
@@ -18,8 +22,6 @@ from const import (
     INCORRECT_ANSWERS,
     HINT_DONT_NEED,
     REPEAT_PLEASE,
-    DONT_KNOW, FACT_ANYTHING_ELSE_MOMENT, CONTINUE_ANYTHING_ELSE_MOMENT, END_ANYTHING_ELSE_MOMENT,
-    SELECT_CARD_ANYTHING_ELSE_MOMENT
 )
 import repositories
 import filters
@@ -220,17 +222,20 @@ async def handler_can_do(alice: AliceRequest, state: State, **kwargs):
              "Продвигаясь все дальше ты будешь отвечать на вопросы и зарабатывать баллы.\n" \
              "Узнай интересные факты, побывай в красивых местах и проникнись атмосферой " \
              "других стран вместе с дедушкой путешественником."
-    # TODO: tts
+
     buttons = []
     match state.current:
-        case GameStates.GUESS_ANSWER | GameStates.FACT | GameStates.QUESTION_TIME:
-            buttons.extend(GAME_BUTTONS_GROUP)
-
         case GameStates.SELECT_CARD:
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
 
         case GameStates.END:
             buttons.extend(NEW_OR_CLOSE_GAME_BUTTONS_GROUP)
+
+        case GameStates.FACT:
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
+
+        case GameStates.SHOW_CARDS:
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
 
         case _:
             buttons.extend(MENU_BUTTONS_GROUP)
@@ -251,17 +256,18 @@ async def handler_help(alice: AliceRequest, state: State, **kwargs):
     buttons = []
 
     match state.current:
-        case GameStates.GUESS_ANSWER | GameStates.FACT | GameStates.QUESTION_TIME:
+        case GameStates.GUESS_ANSWER:
             answer += "Подсказка\n" \
                       "Следующий вопрос\n" \
                       "Повтори\n" \
+                      "Повтори вопрос\n" \
                       "Завершить игру"
             buttons.extend(GAME_BUTTONS_GROUP)
 
         case GameStates.SELECT_CARD:
-            answer += "1 по 5. Выбор карточек\n" \
+            answer += "Выбор карточек по наименованию или по номеру\n" \
                       "Повторить карточки\n" \
-                      "Выход\n"
+                      "Завершить игру"
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
 
         case GameStates.END:
@@ -269,11 +275,19 @@ async def handler_help(alice: AliceRequest, state: State, **kwargs):
                       "Завершить игру"
             buttons.extend(NEW_OR_CLOSE_GAME_BUTTONS_GROUP)
 
+        case GameStates.FACT:
+            answer += "Согласиться или отказаться от интересного факта"
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
+
+        case GameStates.SHOW_CARDS:
+            answer += "Продолжить или завершить игру"
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
+
         case _:
-            answer += "1. Начать игру\n" \
-                      "2. Что-ты умеешь\n" \
-                      "3. Повтори\n" \
-                      "4. Завершить игру"
+            answer += "Начать игру\n" \
+                      "Что-ты умеешь\n" \
+                      "Повтори\n" \
+                      "Завершить игру"
             buttons.extend(MENU_BUTTONS_GROUP)
 
     return alice.response(answer, buttons=buttons)
@@ -556,12 +570,6 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
 
     return await handler_show_cards(alice, state=state)
 
-
-# TODO
-# @mixin_appmetrica_log(dp)
-# @mixin_state
-# async def handler_answer_brute_force(alice: AliceRequest, state: State, **kwargs):
-#     logging.info(f"User: {alice.session.user_id}: Handler->Перебор ответов")
 
 @mixin_appmetrica_log(dp)
 @mixin_can_repeat(dp)
