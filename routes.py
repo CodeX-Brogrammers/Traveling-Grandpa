@@ -17,15 +17,15 @@ from const import (
     GAME_BUTTONS_GROUP,
     INCORRECT_ANSWERS,
     HINT_DONT_NEED,
-    MAYBE_ERROR,
-    DONT_KNOW
+    REPEAT_PLEASE,
+    DONT_KNOW, FACT_ANYTHING_ELSE_MOMENT, CONTINUE_ANYTHING_ELSE_MOMENT, END_ANYTHING_ELSE_MOMENT,
+    SELECT_CARD_ANYTHING_ELSE_MOMENT
 )
 import repositories
 import filters
 import schemes
 import models
 import nlu
-
 
 dp = Dispatcher(storage=HybridStorage())
 
@@ -166,7 +166,10 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
 
 
 # Обработчик повторения последней команды
-@dp.request_handler(filters.RepeatFilter(), state="*")
+@dp.request_handler(
+    filters.RepeatFilter(),
+    state="*"
+)
 @mixin_appmetrica_log(dp)
 @mixin_state
 async def handler_repeat(alice: AliceRequest, state: State):
@@ -178,6 +181,16 @@ async def handler_repeat(alice: AliceRequest, state: State):
     ) >= 1.0:
         logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Вопрос")
         if response := data.get(RepeatKey.QUESTION.value, None):
+            return response
+
+    if (state.current == GameStates.SELECT_CARD
+            and (state.session.need_repeat or nlu.calculate_coincidence(
+                input_tokens=nlu.lemmatize(nlu.tokenizer(alice.request.command)),
+                source_tokens=nlu.lemmatize(["карточки", "карты"])
+            ) >= 0.5)):
+        state.session.need_repeat = False
+        logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Карточки")
+        if response := data.get(RepeatKey.CARDS.value, None):
             return response
 
     logging.info(f"User: {alice.session.user_id}: Handler->Повторить->Последний ответ")
@@ -305,9 +318,9 @@ async def handler_start_game(alice: AliceRequest, state: State, **kwargs):
     state="*"
 )
 @mixin_appmetrica_log(dp)
-@mixin_can_repeat(dp)
+@mixin_can_repeat(dp, RepeatKey.CARDS)
 @mixin_state
-async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str = None, **kwargs):
+async def handler_show_cards(alice: AliceRequest, state: State, **kwargs):
     await dp.storage.set_state(
         alice.session.user_id,
         GameStates.SELECT_CARD,
@@ -328,7 +341,7 @@ async def handler_show_cards(alice: AliceRequest, state: State, extra_text: str 
     ])
 
     return alice.response_items_list(
-        text=extra_text if extra_text else "Выберите одну из карточек",  # Не отображается
+        text="Выберите одну из карточек",  # Не отображается
         header="Выберите одну из карточек",
         items=cards,
         buttons=REPEAT_OR_CLOSE_BUTTONS_GROUP,
@@ -353,7 +366,7 @@ async def handler_select_card(alice: AliceRequest, state: State, **kwargs):
     ])
 
     if result is None or len(result) == 0:
-        return await handler_show_cards(alice, state=state, extra_text="Не слышу, повтори ещё раз")
+        return await handler_all(alice, state=state)
 
     if isinstance(result, list):
         answer: Diff = result[0]
@@ -584,6 +597,7 @@ async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
         buttons=CONFIRM_BUTTONS_GROUP
     )
 
+
 @mixin_appmetrica_log(dp)
 @mixin_can_repeat(dp)
 @mixin_state
@@ -665,14 +679,38 @@ async def handler_fact_reject(alice: AliceRequest, **kwargs):
 
 @dp.request_handler(state="*")
 @mixin_appmetrica_log(dp)
-@mixin_can_repeat(dp)
 @mixin_state
 async def handler_all(alice: AliceRequest, state: State):
     logging.info(f"User: {alice.session.user_id}: Handler->Общий обработчик")
-    answer = choice(MAYBE_ERROR)
-    return await alice.response(
+
+    answer: schemes.Text
+    buttons = []
+    match state.current:
+        case GameStates.SELECT_CARD:
+            state.session.need_repeat = True
+            answer = choice(SELECT_CARD_ANYTHING_ELSE_MOMENT)
+            buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
+
+        case GameStates.END:
+            answer = choice(END_ANYTHING_ELSE_MOMENT)
+            buttons.extend(NEW_OR_CLOSE_GAME_BUTTONS_GROUP)
+
+        case GameStates.FACT:
+            answer = choice(FACT_ANYTHING_ELSE_MOMENT)
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
+
+        case GameStates.SHOW_CARDS:
+            answer = choice(CONTINUE_ANYTHING_ELSE_MOMENT)
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
+
+        case _:
+            answer = choice(REPEAT_PLEASE)
+            buttons.extend(MENU_BUTTONS_GROUP)
+
+    return alice.response(
         answer.src,
-        tts=answer.tts
+        tts=answer.tts,
+        buttons=buttons
     )
 
 

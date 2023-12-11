@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, model_validator
 class RepeatKey(enum.Enum):
     LAST = "last"
     HINT = "hint"
+    CARDS = "cards"
     QUESTION = "question"
 
 

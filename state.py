@@ -1,5 +1,5 @@
-import enum
 from typing import Optional
+import enum
 
 from aioalice.utils.helper import Helper, HelperMode, Item
 from aioalice.dispatcher.storage import MemoryStorage
@@ -19,6 +19,7 @@ class SessionState(BaseModel):
     latest_hints: list[int] = Field(default_factory=list)
     try_count: int = 0
     need_hint: bool = Field(default=False)
+    need_repeat: bool = Field(default=False)
     state: str = "*"
 
 
@@ -98,7 +99,8 @@ class HybridStorage(MemoryStorage):
         return user
 
     async def reset_data(self, user_id):
-        await self.redis.set(user_id, "{}")
+        if self.redis:
+            await self.redis.set(user_id, "{}")
 
     async def set_data(self, user_id, data):
         userdata = await self._get_user_data(user_id)

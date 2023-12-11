@@ -90,7 +90,7 @@ DONT_KNOW = (
     )
 )
 
-MAYBE_ERROR = (
+REPEAT_PLEASE = (
     Text(
         src="К сожалению, я не совсем понял, что ты имеешь ввиду. Скажи еще раз.",
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/4b91bb06-da11-4035-a0f4-b5e7ae1161fc.opus'>"
@@ -103,6 +103,38 @@ MAYBE_ERROR = (
         src="Прости, но я не расслышал тебя. Пожалуйста, можешь повторить громче?",
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/d982e409-f8aa-4b33-9e25-a4f6dadd9326.opus'>"
     )
+)
+
+SELECT_CARD_ANYTHING_ELSE_MOMENT = (
+    Text(
+        src="Кажется у нас проблемы со связью, какую карточку ты выбрал ?",
+        tts=""
+    ),
+    Text(
+        src="Извини, но такой карточки нет, если нужно я могу повторить их.",
+        tts=""
+    ),
+)
+
+END_ANYTHING_ELSE_MOMENT = (
+    Text(
+        src="Извини, ты хочешь начать новую игру или завершить её ?",
+        tts=""
+    ),
+)
+
+FACT_ANYTHING_ELSE_MOMENT = (
+    Text(
+        src="Это конечно хорошо, но ты хочешь послушать интересный факт ?",
+        tts=""
+    ),
+)
+
+CONTINUE_ANYTHING_ELSE_MOMENT = (
+    Text(
+        src="Кажется у нас проблемы со связью, ты хочешь продолжить ?",
+        tts=""
+    ),
 )
 
 ALL_HINTS_IS_TAKES = (
