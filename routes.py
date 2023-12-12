@@ -21,8 +21,10 @@ from const import (
     ALL_HINTS_IS_TAKES,
     GAME_BUTTONS_GROUP,
     INCORRECT_ANSWERS,
+    SHOW_CARDS_ANSWER,
     HINT_DONT_NEED,
-    REPEAT_PLEASE, SHOW_CARDS_ANSWER, START_ANSWER,
+    REPEAT_PLEASE,
+    START_ANSWER,
 )
 import repositories
 import filters
@@ -346,7 +348,7 @@ async def handler_show_cards(alice: AliceRequest, state: State, **kwargs):
     answer: schemes.Text = SHOW_CARDS_ANSWER[interface]
     tts = "\n".join([
         answer.tts,
-        *[card.title for card in cards]
+        *[card.button.payload["tts"] for card in cards]
     ])
 
     return alice.response_items_list(

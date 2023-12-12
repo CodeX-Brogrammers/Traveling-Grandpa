@@ -231,7 +231,8 @@ class CardRepository:
             button=Button(
                 title="Достопримечательности",
                 payload={
-                    "selected_card": models.CardType.ATTRACTIONS
+                    "selected_card": models.CardType.ATTRACTIONS,
+                    "tts": '<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/667c77d3-88b8-4b37-88c1-b6cbc636cfda.opus">'
                 }
             )
         ),
@@ -243,7 +244,8 @@ class CardRepository:
             button=Button(
                 title="Национальные блюда",
                 payload={
-                    "selected_card": models.CardType.NATIONAL_DISHES
+                    "selected_card": models.CardType.NATIONAL_DISHES,
+                    "tts": '<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/c14edaf5-1d69-40da-b8cf-c29e422ece7f.opus">'
                 }
             )
         ),
@@ -255,7 +257,8 @@ class CardRepository:
             button=Button(
                 title="Культурные особенности",
                 payload={
-                    "selected_card": models.CardType.CULTURAL_FEATURES
+                    "selected_card": models.CardType.CULTURAL_FEATURES,
+                    "tts": '<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/f1f46843-c453-4fae-916a-d94cc6a1b0c7.opus">'
                 }
             )
         ),
@@ -267,7 +270,8 @@ class CardRepository:
             button=Button(
                 title="Факты о стране",
                 payload={
-                    "selected_card": models.CardType.FACTS
+                    "selected_card": models.CardType.FACTS,
+                    "tts": '<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/54c12ab7-255f-40ec-a6fd-283d4945bc72.opus">'
                 }
             )
         ),
@@ -279,7 +283,8 @@ class CardRepository:
             button=Button(
                 title="Творчество",
                 payload={
-                    "selected_card": models.CardType.CREATIVITY
+                    "selected_card": models.CardType.CREATIVITY,
+                    "tts": '<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/242705b0-f065-4693-b39d-271e6df9ff5a.opus">'
                 }
             )
         )

@@ -121,11 +121,11 @@ REPEAT_PLEASE = (
 SHOW_CARDS_ANSWER = {
     "screen": Text(
         src="Выбери карточку с помощью которой ты будешь угадывать страну",
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/8b84f064-87bc-4c21-9b62-6d6f0efa5080.opus">'
+        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/b795e9b2-029d-4feb-ab10-44db891f485f.opus">'
     ),
     "no_screen": Text(
         src="Выбери тему с помощью которой ты будешь угадывать страну",
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/8867927d-5f49-4132-83ef-7feb5a98e3ff.opus">'
+        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/41b4b7f4-71b2-4d72-811f-ad95e57805c5.opus">'
     )
 }
 
