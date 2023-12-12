@@ -221,6 +221,7 @@ class UserRepository:
 
 
 class CardRepository:
+    # TODO: TTS
     CARDS = {
         models.CardType.ATTRACTIONS: Image(
             image_id="997614/8e4eda6eb11d49980d4d",

@@ -22,7 +22,7 @@ from const import (
     GAME_BUTTONS_GROUP,
     INCORRECT_ANSWERS,
     HINT_DONT_NEED,
-    REPEAT_PLEASE,
+    REPEAT_PLEASE, SHOW_CARDS_ANSWER, START_ANSWER,
 )
 import repositories
 import filters
@@ -46,21 +46,14 @@ async def handler_start(alice: AliceRequest, state: State, **kwargs):
     )
     await dp.storage.reset_data(alice.session.user_id)
 
-    answer = "Приём, приём... Как слышно? Это твой дедушка! и голосовой помощник Алиса!\n" \
-             "Мы как всегда, отправились в удивительное путешествие...\n" \
-             "Но в этот раз мне нужна твоя помощь!\n" \
-             "Видишь, из-за моих бесконечных приключений я совсем забыл, как называются разные страны.\n" \
-             "Можешь ли ты мне помочь их отгадать по интересным фактам?\n"
-
+    answer = START_ANSWER
     return alice.response_big_image(
-        answer,
-        tts='<speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/e9edf4de-ae29-44b2-a851-a3e9d39590d2.opus"> и голосовой помощник Алеся !' \
-            '<speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/e6b057c3-0ffa-453b-b56b-84e26e3844fd.opus">' \
-            '',
+        answer.src,
+        tts=answer.tts,
         image_id="1652229/066bed1b217f0e2c894a",
         buttons=MENU_BUTTONS_GROUP,
         title="",
-        description=answer
+        description=answer.src
     )
 
 
@@ -111,7 +104,7 @@ async def handler_new_game(alice: AliceRequest, **kwargs):
 )
 @mixin_appmetrica_log(dp)
 async def handler_close_game(alice: AliceRequest, text: str | None = None, **kwargs):
-    close_text = "Буду скучать, возвращайся! С любовью, твой дедушка."
+    close_text = "Буду скучать, возвращайся! С любовью, твой дедушка ♥"
     if text:
         close_text = text + close_text
 
@@ -349,15 +342,16 @@ async def handler_show_cards(alice: AliceRequest, state: State, **kwargs):
         await repositories.UserRepository.clear_passed_cards(user)
         return await handler_end(alice, state=state, true_end=True)
 
-    tts = "Выберите одну из карточек"
+    interface = "screen" if alice.meta.interfaces._raw_kwargs.get("screen", False) == {} else "no_screen"
+    answer: schemes.Text = SHOW_CARDS_ANSWER[interface]
     tts = "\n".join([
-        tts,
+        answer.tts,
         *[card.title for card in cards]
     ])
 
     return alice.response_items_list(
-        text="Выберите одну из карточек",  # Не отображается
-        header="Выберите одну из карточек",
+        text=answer.src,
+        header=answer.src,
         items=cards,
         buttons=REPEAT_OR_CLOSE_BUTTONS_GROUP,
         tts=tts
@@ -697,13 +691,15 @@ async def handler_fact_reject(alice: AliceRequest, **kwargs):
 @mixin_state
 async def handler_all(alice: AliceRequest, state: State):
     logging.info(f"User: {alice.session.user_id}: Handler->Общий обработчик")
+    interface = "screen" if alice.meta.interfaces._raw_kwargs.get("screen", False) == {} else "no_screen"
 
     answer: schemes.Text
     buttons = []
     match state.current:
         case GameStates.SELECT_CARD:
             state.session.need_repeat = True
-            answer = choice(SELECT_CARD_ANYTHING_ELSE_MOMENT)
+            answers = SELECT_CARD_ANYTHING_ELSE_MOMENT[interface]
+            answer = choice(answers)
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
 
         case GameStates.END:
