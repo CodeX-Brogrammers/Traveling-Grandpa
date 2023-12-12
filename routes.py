@@ -563,6 +563,9 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
                     tts=answer.tts
                 )
 
+        elif filters.TextContainFilter(["нет"]).check(alice):
+            return await handler_dont_know_answer(alice, state=state)
+
         return await handler_false_answer(alice, state=state)
 
     first_country: Diff = result[0]
