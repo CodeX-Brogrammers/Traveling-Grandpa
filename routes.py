@@ -552,13 +552,13 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
     )])
 
     if result is None:
-        if filters.OneOfFilter(
+        if await filters.OneOfFilter(
                 filters.TextContainFilter(["едем"]),
                 filters.TextContainFilter(["дальше"]),
         ).check(alice):
             return await handler_skip_question(alice, state=state)
 
-        elif state.session.need_hint:
+        if state.session.need_hint:
             # Когда пользователь соглашается на подсказку после неверного ответа
             if filters.ConfirmFilter().check(alice):
                 state.session.need_hint = False
