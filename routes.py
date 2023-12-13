@@ -108,9 +108,10 @@ async def handler_new_game(alice: AliceRequest, **kwargs):
 @mixin_appmetrica_log(dp)
 async def handler_close_game(alice: AliceRequest, text: schemes.Text = schemes.Text(src=""), **kwargs):
     close_answer = CLOSE_GAME_ANSWER
-
+    if text.src:
+        text.src += "\n"
     return alice.response(
-        "\n".join([text.src, close_answer.src]),
+        "".join([text.src, close_answer.src]),
         tts=text.tts + close_answer.tts,
         end_session=True
     )
@@ -685,7 +686,7 @@ async def handler_fact_confirm(alice: AliceRequest, state: State, **kwargs):
     fact: schemes.Text = choice(country.facts)
     continue_answer = choice(CONTINUE_ANSWER)
     return alice.response(
-        fact.src + continue_answer.src,
+        "\n".join([fact.src, continue_answer.src]),
         tts=fact.tts + continue_answer.tts,
         buttons=CONFIRM_BUTTONS_GROUP
     )
