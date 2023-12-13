@@ -33,7 +33,7 @@ CONTINUE_ANSWER = (
     Text(
         src="Хочешь продолжить ?",
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/c923f5a8-e5c3-45ac-a95c-c4a4361c2501.opus'>"
-    )
+    ),
 )
 
 START_ANSWER = Text(
