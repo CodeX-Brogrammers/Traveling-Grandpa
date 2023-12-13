@@ -155,7 +155,8 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
 
     text.src += f"\nЗа игру вы заработали {score} очков." \
                 f"\nОбщее количество очков: {global_score}." \
-                f"\nВы занимаете {rank} место в рейтинге. Желаете начать заново?"
+                f"\nВы занимаете {rank} место в рейтинге." \
+                "\nЖелаете начать заново?"
 
     state.clear_after_question()
     await dp.storage.set_state(
