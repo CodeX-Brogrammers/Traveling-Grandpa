@@ -454,7 +454,7 @@ async def handler_question(alice: AliceRequest, state: State, **kwargs):
     state="*"
 )
 @mixin_appmetrica_log(dp)
-async def handler_skip_question(alice: AliceRequest):
+async def handler_skip_question(alice: AliceRequest, *args, **kwargs):
     return await handler_show_cards(alice)
 
 
