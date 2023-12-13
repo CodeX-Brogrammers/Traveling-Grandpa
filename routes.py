@@ -645,7 +645,8 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
 @dp.request_handler(
     filters.OneOfFilter(
         filters.ConfirmFilter(),
-        filters.TextContainFilter(["расскажи"])
+        filters.TextContainFilter(["расскажи"]),
+        filters.TextContainFilter(["рассказывай"]),
     ),
     filters.SessionState(GameStates.FACT),
     state="*")
