@@ -27,6 +27,11 @@ class ConfirmFilter(Filter):
         return _check_included_intent_names(alice, ["YANDEX.CONFIRM", "YANDEX.BOOK.NAVIGATION.NEXT", "AGREE"])
 
 
+class HintNeedFilter(Filter):
+    def check(self, alice: AliceRequest):
+        return _check_included_intent_names(alice, ["HINT_NEED"])
+
+
 class RejectFilter(Filter):
     def check(self, alice: AliceRequest):
         return _check_included_intent_names(alice, ["YANDEX.REJECT", "REFUSAL"])
@@ -38,9 +43,15 @@ class RepeatFilter(Filter):
 
 
 class HelpFilter(Filter):
+    SKIP_TOKENS = [
+        nlu.lemmatize(["подсказка"])[0],
+        nlu.lemmatize(["подсказать"])[0]
+    ]
+
     def check(self, alice: AliceRequest):
+        normalized_tokens = nlu.lemmatize(alice.request.nlu.tokens)
         return _check_included_intent_names(alice, ["YANDEX.HELP", "HELP"]) \
-               and "подсказка" not in nlu.lemmatize(alice.request.nlu.tokens)
+            and all([token not in normalized_tokens for token in self.SKIP_TOKENS])
 
 
 class RestartFilter(Filter):

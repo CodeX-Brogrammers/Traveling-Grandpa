@@ -468,7 +468,7 @@ async def handler_dont_know_answer(alice: AliceRequest, state: State, **kwargs):
 
 
 @dp.request_handler(
-    filters.TextContainFilter(["подсказка"]),
+    filters.HintNeedFilter(),
     filters.SessionState(GameStates.GUESS_ANSWER),
     state="*"
 )
@@ -643,7 +643,10 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
 
 
 @dp.request_handler(
-    filters.ConfirmFilter(),
+    filters.OneOfFilter(
+        filters.ConfirmFilter(),
+        filters.TextContainFilter(["расскажи"])
+    ),
     filters.SessionState(GameStates.FACT),
     state="*")
 @mixin_appmetrica_log(dp)
