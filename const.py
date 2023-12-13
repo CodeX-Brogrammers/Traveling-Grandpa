@@ -81,10 +81,6 @@ INCORRECT_ANSWERS = (
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/4689f107-2811-46e0-b53a-8bbedbee90e6.opus">'
     ),
     Text(
-        src='Ты угадал. Нужна подсказка?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/59313ddd-9e88-436c-be9f-5eaf5f4a16e9.opus">'
-    ),
-    Text(
         src='Нет, это неправильно. Думаю подсказка поможет, хочешь использовать её?',
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/e8f9cceb-2131-42a8-97dc-291d9b34f061.opus">'
     ),
