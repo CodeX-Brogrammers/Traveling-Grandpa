@@ -21,6 +21,8 @@ from const import (
     GAME_BUTTONS_GROUP,
     INCORRECT_ANSWERS,
     SHOW_CARDS_ANSWER,
+    CLOSE_GAME_ANSWER,
+    CONTINUE_ANSWER,
     HINT_DONT_NEED,
     REPEAT_PLEASE,
     START_ANSWER,
@@ -104,13 +106,12 @@ async def handler_new_game(alice: AliceRequest, **kwargs):
     state="*"
 )
 @mixin_appmetrica_log(dp)
-async def handler_close_game(alice: AliceRequest, text: str | None = None, **kwargs):
-    close_text = "Буду скучать, возвращайся! С любовью, твой дедушка ♥"
-    if text:
-        close_text = text + close_text
+async def handler_close_game(alice: AliceRequest, text: schemes.Text = schemes.Text(src=""), **kwargs):
+    close_answer = CLOSE_GAME_ANSWER
 
     return alice.response(
-        close_text,
+        "\n".join([text.src, close_answer.src]),
+        tts=text.tts + close_answer.tts,
         end_session=True
     )
 
@@ -132,10 +133,16 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
     logging.info(f"User: {alice.session.user_id}: Handler->Заключение")
 
     if true_end:
-        text = "Поздравляем, ты отгадали все страны, где мы побывали 🎉"
+        text = schemes.Text(
+            src="Поздравляем, ты отгадали все страны, где мы побывали 🎉"
+        )
     else:
-        text = "Понимаю, что у тебя свои дела и обязанности, и я ценю всю помощь, что ты уже мне предоставил.\n" \
-               "Не переживай, я продолжу мое увлекательное путешествие и поделюсь новостями, когда ты вернёшься."
+        text = schemes.Text(
+            src="Понимаю, что у тебя свои дела и обязанности, я очень ценю всю предоставленную мне помощь.\n"
+                "Не переживай, я продолжу мое увлекательное путешествие и поделюсь новостями, когда ты вернёшься.",
+            tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/f403dbab-44ca-45e1-a276-a5a74cfcbc25.opus'>sil <[150]>"
+                "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/8589bcdf-9ac9-4282-9215-7473cd1cfbdd.opus'>"
+        )
 
     if state.current == GameStates.START:
         return await handler_close_game(alice, text=text)
@@ -145,9 +152,9 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
     global_score = await repositories.UserRepository.increase_global_score(user)
     rank = await repositories.UserRepository.get_rank(user)
 
-    text += f"\nЗа игру вы заработали {score} очков." \
-            f"\nОбщее количество очков: {global_score}." \
-            f"\nВы занимаете {rank} место в рейтинге. Желаете начать заново?"
+    text.src += f"\nЗа игру вы заработали {score} очков." \
+                f"\nОбщее количество очков: {global_score}." \
+                f"\nВы занимаете {rank} место в рейтинге. Желаете начать заново?"
 
     state.clear_after_question()
     await dp.storage.set_state(
@@ -157,7 +164,9 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
     )
 
     return alice.response(
-        text, buttons=NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
+        text.src,
+        tts=text.tts,
+        buttons=NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
         session_state=state.session.model_dump()
     )
 
@@ -544,8 +553,8 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
 
     if result is None:
         if filters.OneOfFilter(
-            filters.TextContainFilter(["едем"]),
-            filters.TextContainFilter(["дальше"]),
+                filters.TextContainFilter(["едем"]),
+                filters.TextContainFilter(["дальше"]),
         ).check(alice):
             return await handler_skip_question(alice, state=state)
 
@@ -674,9 +683,10 @@ async def handler_fact_confirm(alice: AliceRequest, state: State, **kwargs):
     )
 
     fact: schemes.Text = choice(country.facts)
+    continue_answer = choice(CONTINUE_ANSWER)
     return alice.response(
-        fact.src + "\n Хочешь продолжить ?",
-        tts=fact.tts + "\n Хочешь продолжить ?",
+        fact.src + continue_answer.src,
+        tts=fact.tts + continue_answer.tts,
         buttons=CONFIRM_BUTTONS_GROUP
     )
 
