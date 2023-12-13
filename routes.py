@@ -14,7 +14,6 @@ from const import (
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
     REPEAT_OR_CLOSE_BUTTONS_GROUP,
     CONTINUE_ANYTHING_ELSE_MOMENT,
-    INCORRECT_ANSWERS_COUNTRY,
     END_ANYTHING_ELSE_MOMENT,
     CONFIRM_BUTTONS_GROUP,
     MENU_BUTTONS_GROUP,
@@ -610,9 +609,25 @@ async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
 @mixin_can_repeat(dp)
 @mixin_state
 async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
+    state.session.try_count += 1
+    state.session.need_hint = True
+
+    if state.session.try_count < 3:
+        answer = choice(INCORRECT_ANSWERS)
+        return alice.response(
+            answer.src,
+            tts=answer.tts,
+            buttons=GAME_BUTTONS_GROUP
+        )
+
+    await dp.storage.set_state(
+        alice.session.user_id,
+        GameStates.FACT,
+        alice_state=state
+    )
+
     country_id = state.session.current_question
     selected_card = state.session.selected_card
-
     country: models.CountryShortView = await repositories.CountryRepository.get_card_with_names(
         country_id=country_id,
         card_type=selected_card
@@ -620,30 +635,10 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
     card: models.Card = country.card
     answer = card.answers.incorrect
 
-    state.session.try_count += 1
-    state.session.need_hint = True
-
-    if state.session.try_count >= 3:
-        await dp.storage.set_state(
-            alice.session.user_id,
-            GameStates.FACT,
-            alice_state=state
-        )
-        # TODO: Тут должен быть answer.incorrect
-        answer = choice(INCORRECT_ANSWERS)
-        country_text = INCORRECT_ANSWERS_COUNTRY[country.name]
-        return alice.response(
-            "\n".join([country_text.src, answer.src]),
-            tts="\n".join([country_text.tts, answer.tts]),
-            buttons=CONFIRM_BUTTONS_GROUP
-        )
-
-    # TODO: А тут INCORRECT_ANSWERS
-
     return alice.response(
         answer.src,
         tts=answer.tts,
-        buttons=GAME_BUTTONS_GROUP
+        buttons=CONFIRM_BUTTONS_GROUP
     )
 
 
