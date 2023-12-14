@@ -113,23 +113,11 @@ async def handler_close_game(alice: AliceRequest, text: schemes.Text = schemes.T
 
 @dp.request_handler(
     filters.SessionState(GameStates.CONFIRM_END),
-    filters.ConfirmFilter(),
-    state="*"
-)
-@mixin_appmetrica_log(dp)
-@mixin_state
-async def handler_confirm_end(alice: AliceRequest, state: State, **kwargs):
-    await dp.storage.set_state(
-        alice.session.user_id,
-        state=GameStates.END,
-        alice_state=state
-    )
-    return await handler_end(alice, state=state)
-
-
-@dp.request_handler(
-    filters.SessionState(GameStates.CONFIRM_END),
-    filters.RejectFilter(),
+    filters.OneOfFilter(
+        filters.RejectFilter(),
+        filters.NextFilter(),
+        filters.TextContainFilter(["Продолжить"])
+    ),
     state="*"
 )
 @mixin_appmetrica_log(dp)
@@ -141,6 +129,25 @@ async def handler_reject_end(alice: AliceRequest, state: State, **kwargs):
         alice_state=state
     )
     return await handler_repeat(alice, state=state)
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.CONFIRM_END),
+    filters.OneOfFilter(
+        filters.ConfirmFilter(),
+        filters.EndFilter()
+    ),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_state
+async def handler_confirm_end(alice: AliceRequest, state: State, **kwargs):
+    await dp.storage.set_state(
+        alice.session.user_id,
+        state=GameStates.END,
+        alice_state=state
+    )
+    return await handler_end(alice, state=state)
 
 
 @dp.request_handler(
@@ -330,6 +337,12 @@ async def handler_help(alice: AliceRequest, state: State, **kwargs):
                 HELP_ANSWER["end"]
             ])
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
+
+        case GameStates.CONFIRM_END:
+            answer.extend([
+                HELP_ANSWER["continue_or_close_game"]
+            ])
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
 
         case GameStates.END:
             answer.extend([
@@ -806,6 +819,10 @@ async def handler_all(alice: AliceRequest, state: State):
             answers = SELECT_CARD_ANYTHING_ELSE_MOMENT[interface]
             answer = choice(answers)
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
+
+        # case GameStates.CONFIRM_END:
+        #     answer = choice(CONFIRM_END_ANYTHING_ELSE_MOMENT)
+        #     buttons.extend(CONFIRM_BUTTONS_GROUP)
 
         case GameStates.END:
             answer = choice(END_ANYTHING_ELSE_MOMENT)

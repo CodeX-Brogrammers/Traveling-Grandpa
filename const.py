@@ -98,8 +98,8 @@ HELP_ANSWER = {
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/912055bd-a87b-4efc-ad18-ceeb898b9778.opus'>"
     ),
     "continue_or_close_game": Text(
-        src="Согласиться или отказаться от интересного факта",
-        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/912055bd-a87b-4efc-ad18-ceeb898b9778.opus'>"
+        src="Продолжить или завершить игру",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/6f895543-be53-44bd-add7-247790a4039c.opus'>"
     ),
     "what_can_do": Text(
         src="Что ты умеешь",
