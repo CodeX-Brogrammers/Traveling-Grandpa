@@ -31,10 +31,73 @@ REPEAT_OR_CLOSE_BUTTONS_GROUP = [REPEAT_BUTTON, CLOSE_BUTTON]
 
 CONTINUE_ANSWER = (
     Text(
-        src="Хочешь продолжить ?",
-        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/c923f5a8-e5c3-45ac-a95c-c4a4361c2501.opus'>"
+        src="Хочешь продолжить игру ?",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/328ccf9c-cb22-4bee-a601-0c70a7ca8a14.opus'>"
     ),
+    Text(
+        src="Давай продолжим отгадывать страны ?",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/c2dfcfaa-2f87-42e7-8102-3046361a09a1.opus'>"
+    ),
+    Text(
+        src="Продолжим нашу игру?",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/8c7c9b64-478b-4810-b656-fa778c097851.opus'>"
+    )
 )
+
+HELP_ANSWER = {
+    "main": Text(
+        src="В данный момент тебе доступны следующие команды:",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/75575914-55e6-4f57-ba8b-ec171386aba7.opus'>"
+    ),
+    "hint": Text(
+        src="Подсказка",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/f84d7adb-e2f0-4a90-8370-c57e8e0f2ae3.opus'>"
+    ),
+    "next": Text(
+        src="Следующий вопрос",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/b59810ca-4496-43b9-bab2-9189926c9c42.opus'>"
+    ),
+    "repeat": Text(
+        src="Повтори",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/9e202b6e-3eb1-4c70-bec6-0b3160f7709f.opus'>"
+    ),
+    "repeat_question": Text(
+        src="Повтори вопрос",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/416475e3-7d73-4716-98e4-5242d236e291.opus'>"
+    ),
+    "repeat_cards": Text(
+        src="Повторить карточки",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/629b1cb5-24b5-43f6-ab94-00b6083124d2.opus'>"
+    ),
+    "questions": Text(
+        src="Выбор карточек по наименованию или по номеру",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/0d2ad9bc-b323-46cd-abdb-f1d90ab261b4.opus'>"
+    ),
+    "end": Text(
+        src="Завершить игру",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/cdd19227-d955-4266-ac0b-1721db72c220.opus'>"
+    ),
+    "restart": Text(
+        src="Начать заново",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/ba9f1aa7-0fcf-4c2b-b80c-7d31eb290a34.opus'>"
+    ),
+    "start": Text(
+        src="Начать игру",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/4ee8bd24-5c72-45e5-a942-778ad1f86622.opus'>"
+    ),
+    "agree_or_reject_fact": Text(
+        src="Согласиться или отказаться от интересного факта",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/912055bd-a87b-4efc-ad18-ceeb898b9778.opus'>"
+    ),
+    "continue_or_close_game": Text(
+        src="Согласиться или отказаться от интересного факта",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/912055bd-a87b-4efc-ad18-ceeb898b9778.opus'>"
+    ),
+    "what_can_do": Text(
+        src="Что ты умеешь",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/3dc722ea-bc7f-46c9-b483-911466bc2b6d.opus'>"
+    )
+}
 
 START_ANSWER = Text(
     src="\n".join([
@@ -273,5 +336,35 @@ ALL_HINTS_IS_TAKES = (
     Text(
         src="К несчастью подсказок больше нет, ты уже получил каждую из них .  Повторю  их ещё раз.",
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/118236ae-abb8-453d-87c2-60a125e92340.opus'>"
+    )
+)
+
+ANTI_BRUTE_FORCE_ANSWERS = (
+    Text(
+        src="Кажется, я слышу названия нескольких стран. Назови, пожалуйста, итоговый ответ.",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/5b9c9e3f-1e91-4cb0-9059-302e756368f7.opus'>"
+    ),
+    Text(
+        src="Хм, может быть, мне послышалось, но кажется ты называешь несколько стран? Давай выберем из них одну как ответ.",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/46188b61-6f5b-418b-877e-25611bdcde98.opus'>"
+    ),
+    Text(
+        src="Сразу несколько ответов я не могу принять. Выбери только одну страну.",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/99380479-f6b3-4fbc-8d93-4f15b080ba32.opus'>"
+    )
+)
+
+ERROR_ANSWERS = (
+    Text(
+        src="Ой, что-то связь барахлит. Видимо, далеко я забрался, где сигнал плохо доходит. Не мог бы ты сказать своё последнее предложение ещё раз?",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/25377c8f-775a-4caf-a228-f1eb40a3f708.opus'>"
+    ),
+    Text(
+        src="Представляешь, моя рация опять шипит. Я не смог разобрать твои последние слова, повтори, пожалуйста, что ты сказал.",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/21c88c35-e78d-4b31-9476-98f3d8fc8a7f.opus'>"
+    ),
+    Text(
+        src="Извини, у меня плохой сигнал и я тебя плохо слышу. Пожалуйста, повтори своё последнее предложение.",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/5835b488-740b-4bd1-b34a-655b8baa91e3.opus'>"
     )
 )

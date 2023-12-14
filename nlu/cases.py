@@ -135,9 +135,30 @@ class SelectCardHandler(BaseHandler):
 
 
 class QuessAnswerHandler(BaseHandler):
+    def __init__(self, *args, country_names: dict[str, str], **kwargs):
+        self.country_names = country_names
+        super().__init__(*args, **kwargs)
+
     def condition(self) -> bool:
         state = State.from_request(self.alice)
         return state.current == GameStates.GUESS_ANSWER
 
+    def is_brute_force(self):
+        answers = _remove_common_words_from_answers(self.answers)
+        user_answer = _clean_user_command(
+            command=self.alice.request.command,
+            answers=answers
+        )
+
+        entries = set()
+        for token in user_answer.split():
+            token = nlu.lemmatize([token])[0]
+            if country := self.country_names.get(token, None):
+                entries.add(country)
+                
+        return len(entries) > 1
+
     def execute(self) -> list[Diff] | None:
+        if self.is_brute_force():
+            raise AssertionError("Brute force detected")
         return self.text(skip_number_check=True)

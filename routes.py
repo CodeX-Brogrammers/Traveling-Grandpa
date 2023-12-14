@@ -14,6 +14,7 @@ from const import (
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
     REPEAT_OR_CLOSE_BUTTONS_GROUP,
     CONTINUE_ANYTHING_ELSE_MOMENT,
+    ANTI_BRUTE_FORCE_ANSWERS,
     END_ANYTHING_ELSE_MOMENT,
     CONFIRM_BUTTONS_GROUP,
     MENU_BUTTONS_GROUP,
@@ -25,7 +26,9 @@ from const import (
     CONTINUE_ANSWER,
     HINT_DONT_NEED,
     REPEAT_PLEASE,
+    ERROR_ANSWERS,
     START_ANSWER,
+    HELP_ANSWER,
 )
 import repositories
 import filters
@@ -180,6 +183,7 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
     state="*"
 )
 @mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
 @mixin_state
 async def handler_repeat(alice: AliceRequest, state: State):
     data = await dp.storage.get_data(alice.session.user_id)
@@ -216,6 +220,7 @@ async def handler_repeat(alice: AliceRequest, state: State):
         application_state=response_data.get("application_state"),
         version=response_data.get("version")
     )
+
     return response
 
 
@@ -259,45 +264,65 @@ async def handler_can_do(alice: AliceRequest, state: State, **kwargs):
 @mixin_state
 async def handler_help(alice: AliceRequest, state: State, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Помощь")
-    answer = "В данный момент вам доступны следующие команды:\n"
+    answer = [HELP_ANSWER["main"]]
     buttons = []
 
     match state.current:
         case GameStates.GUESS_ANSWER:
-            answer += "Подсказка\n" \
-                      "Следующий вопрос\n" \
-                      "Повтори\n" \
-                      "Повтори вопрос\n" \
-                      "Завершить игру"
+            answer.extend([
+                HELP_ANSWER["hint"],
+                HELP_ANSWER["next"],
+                HELP_ANSWER["repeat"],
+                HELP_ANSWER["repeat_question"],
+                HELP_ANSWER["end"]
+            ])
             buttons.extend(GAME_BUTTONS_GROUP)
 
         case GameStates.SELECT_CARD:
-            answer += "Выбор карточек по наименованию или по номеру\n" \
-                      "Повторить карточки\n" \
-                      "Завершить игру"
+            answer.extend([
+                HELP_ANSWER["questions"],
+                HELP_ANSWER["repeat_cards"],
+                HELP_ANSWER["end"]
+            ])
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
 
         case GameStates.END:
-            answer += "Начать заново\n" \
-                      "Завершить игру"
+            answer.extend([
+                HELP_ANSWER["restart"],
+                HELP_ANSWER["end"]
+            ])
             buttons.extend(NEW_OR_CLOSE_GAME_BUTTONS_GROUP)
 
         case GameStates.FACT:
+            answer.extend([
+                HELP_ANSWER["agree_or_reject_fact"],
+                HELP_ANSWER["what_can_do"],
+                HELP_ANSWER["repeat"],
+                HELP_ANSWER["end"]
+            ])
             answer += "Согласиться или отказаться от интересного факта"
             buttons.extend(CONFIRM_BUTTONS_GROUP)
 
         case GameStates.SHOW_CARDS:
-            answer += "Продолжить или завершить игру"
+            answer.extend([
+                HELP_ANSWER["continue_or_close_game"]
+            ])
             buttons.extend(CONFIRM_BUTTONS_GROUP)
 
         case _:
-            answer += "Начать игру\n" \
-                      "Что-ты умеешь\n" \
-                      "Повтори\n" \
-                      "Завершить игру"
+            answer.extend([
+                HELP_ANSWER["start"],
+                HELP_ANSWER["what_can_do"],
+                HELP_ANSWER["repeat"],
+                HELP_ANSWER["end"]
+            ])
             buttons.extend(MENU_BUTTONS_GROUP)
 
-    return alice.response(answer, buttons=buttons)
+    return alice.response(
+        "\n".join([value.src for value in answer]),
+        tts="\n".join([value.tts for value in answer]),
+        buttons=buttons
+    )
 
 
 @dp.request_handler(filters.RestartFilter(), state="*")
@@ -510,7 +535,7 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
 
     if hint is None:
         answer = choice(ALL_HINTS_IS_TAKES)
-        text = "\n".join([
+        text = "\n\n".join([
             answer.src, *[hint.text.src for hint in hints]
         ])
         tts = "\n".join([
@@ -550,9 +575,24 @@ async def handler_quess_answer(alice: AliceRequest, state: State):
     print(f"{country=}")
     possible_answers = [schemes.AnswerWithIndex(index=0, text=name) for name in country.alternatives]
 
-    result = check_user_answer(alice, handlers=[QuessAnswerHandler(
-        answers=possible_answers
-    )])
+    country_names = await dp.storage.get_data("country_names")
+
+    if not country_names:
+        country_names = await repositories.CountryRepository.get_countries_names()
+        await dp.storage.set_data("country_names", country_names)
+
+    try:
+        result = check_user_answer(alice, handlers=[QuessAnswerHandler(
+            answers=possible_answers,
+            country_names=country_names
+        )])
+    except AssertionError:
+        answer = choice(ANTI_BRUTE_FORCE_ANSWERS)
+        return alice.response(
+            answer.src,
+            tts=answer.tts,
+            buttons=GAME_BUTTONS_GROUP
+        )
 
     if result is None:
         if await filters.OneOfFilter(
@@ -749,4 +789,8 @@ async def handler_all(alice: AliceRequest, state: State):
 @mixin_appmetrica_log(dp)
 async def the_only_errors_handler(alice, e):
     logging.error('An error!', exc_info=e)
-    return alice.response('Кажется что-то пошло не так. ')
+    answer = choice(ERROR_ANSWERS)
+    return alice.response(
+        answer.src,
+        tts=answer.tts
+    )

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 import models
 import schemes
+import nlu
 
 
 class CountryRepository:
@@ -22,7 +23,7 @@ class CountryRepository:
         return await models.Country.find_one(
             models.Country.id == country_id
         )
-    
+
     @staticmethod
     async def get_card_with_names(
             country_id: str | PydanticObjectId, card_type: models.CardType
@@ -43,23 +44,24 @@ class CountryRepository:
         if country:
             return country[0]
         return None
-    
+
     @classmethod
     async def get_facts(cls, country_id: str | PydanticObjectId) -> models.CountryFacts | None:
         return await cls._get_with_project(
-            country_id=country_id, 
+            country_id=country_id,
             project=models.CountryFacts
         )
-    
+
     @classmethod
     async def get_hints(cls, country_id: str | PydanticObjectId) -> models.CountryHints | None:
         return await cls._get_with_project(
-            country_id=country_id, 
+            country_id=country_id,
             project=models.CountryHints
         )
-    
+
     @staticmethod
-    async def random(card_type: models.CardType, passed_cards: list[PydanticObjectId]) -> models.CountryShortView | None:
+    async def random(card_type: models.CardType,
+                     passed_cards: list[PydanticObjectId]) -> models.CountryShortView | None:
         country = await models.Country.aggregate([
             {
                 "$unwind": "$cards"
@@ -67,7 +69,7 @@ class CountryRepository:
             {
                 "$match": {
                     "_id": {"$nin": passed_cards},
-                    "cards.type": card_type.value   
+                    "cards.type": card_type.value
                 }
             },
             {"$sample": {"size": 1}}
@@ -84,6 +86,27 @@ class CountryRepository:
         if country:
             return country[0]["count"]
         return 0
+
+    @staticmethod
+    async def get_countries_names() -> dict | None:
+        countries = await models.Country.aggregate([
+            {
+                '$project': {
+                    '_id': 0,
+                    'names': '$alternatives'
+                }
+            }
+        ]).to_list()
+        if not countries:
+            return None
+
+        result = dict()
+        for country in countries:
+            names = [nlu.lemmatize([name])[0] for name in country["names"]]
+            country = names[0]
+            for name in names:
+                result[name] = country
+        return result
 
 
 class UserRepository:
@@ -120,11 +143,11 @@ class UserRepository:
             user: models.UserData
     ) -> schemes.PassedCardCountView | None:
         result = await models.UserData.aggregate([
-                {
-                    '$match': {
-                        'user_id': user.user_id
-                    }
+            {
+                '$match': {
+                    'user_id': user.user_id
                 }
+            }
         ], projection_model=schemes.PassedCardCountView).to_list()
         if result:
             return result[0]
@@ -221,7 +244,6 @@ class UserRepository:
 
 
 class CardRepository:
-    # TODO: TTS
     CARDS = {
         models.CardType.ATTRACTIONS: Image(
             image_id="997614/8e4eda6eb11d49980d4d",
@@ -322,14 +344,18 @@ if __name__ == '__main__':
     # set points_table index from 1 to ...
     import asyncio
     import random
+
+
     async def test():
         await models.init_database()
 
-        user_id = "0949EEBA2D0E3A59ED6052A46EFC046E6CD43719F826539F1137AED6A7383B09"
-        user = await UserRepository.get(user_id)
-        cards = await CardRepository.get(user)
-        answers = CardRepository.calculate_answers_with_index(cards)
-        print(answers)
+        # user_id = "0949EEBA2D0E3A59ED6052A46EFC046E6CD43719F826539F1137AED6A7383B09"
+        # user = await UserRepository.get(user_id)
+        # cards = await CardRepository.get(user)
+        # answers = CardRepository.calculate_answers_with_index(cards)
+        # print(answers)
+        names = await CountryRepository.get_countries_names()
+        print(names)
         # rank = await UserRepository.get_rank(user)
         # print(rank)
 
@@ -343,5 +369,6 @@ if __name__ == '__main__':
         #     user_id = user
         #     user = await UserRepository.get(user_id)
         #     await UserRepository.increase_score(user, random.randint(1, 1000))
+
 
     asyncio.run(test())

@@ -83,10 +83,11 @@ class HybridStorage(MemoryStorage):
     async def _get_user_data(self, user_id):
         if self.redis:
             data = await self.redis.get(user_id)
-            data = orjson.loads(data)
             if not data:
                 data = {}
                 await self.redis.set(user_id, "{}", ex=60 * 5)
+            else:
+                data = orjson.loads(data)
 
             return data
 
