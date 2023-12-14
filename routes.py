@@ -70,12 +70,16 @@ async def handler_new_game(alice: AliceRequest, **kwargs):
     return alice.response(
         "ЧТО-ТО",
         tts="""
+        Оооо, похоже, вы нашли что-то интересное. 
+        Это небольшая тестовая заготовка сцены с Дедушкой и Алисой в аэропорту.
+        Надеюсь, вам понравиться. sil <[500]>.
         <speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/6efc7e21-4f28-438f-b3bb-8585d0c14dd9.opus">
         <speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/f0b8e03c-7cb0-446c-9c7e-e19dc4133f26.opus">
         Это самый короткий путь до аэропорта по версии Яндекс карт.
         <speaker audio="alice-sounds-things-phone-1.opus">
         <speaker audio="dialogs-upload/936e66b3-1d74-4b8a-8a97-2a31f8367fb4/7acc4e36-471a-47a0-9883-3d3f3b17344a.opus">
         Привет, мы рады тебя снова видеть, мы вот вот отправимся в новое путешествие ты с нами ?
+        Скажи, да, если согласен !
         """
     )
 
@@ -98,10 +102,7 @@ async def handler_new_game(alice: AliceRequest, **kwargs):
     filters.SessionState(GameStates.END),
     filters.OneOfFilter(
         filters.EndFilter(),
-        filters.RejectFilter(),
-        filters.TextContainFilter(["Выход"]),
-        filters.TextContainFilter(["Хватит"]),
-        filters.TextContainFilter(["Закрыть"])
+        filters.RejectFilter()
     ),
     state="*"
 )
