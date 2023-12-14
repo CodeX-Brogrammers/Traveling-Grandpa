@@ -29,6 +29,14 @@ CONFIRM_BUTTONS_GROUP = [OK_BUTTON, REJECT_BUTTON]
 NEW_OR_CLOSE_GAME_BUTTONS_GROUP = [NEW_GAME_BUTTON_MENU, CLOSE_BUTTON_MENU]
 REPEAT_OR_CLOSE_BUTTONS_GROUP = [REPEAT_BUTTON, CLOSE_BUTTON]
 
+TRUE_ANSWER_SOUND = "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/506b8f87-b86f-4e92-ade2-b2a326d1a585.opus'>"
+FALSE_ANSWER_SOUND = "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/5bf4a70a-89c7-4c5f-b901-11a8bc564e15.opus'>"
+
+CONFIRM_EXIT_ANSWER = Text(
+    src="Вы уверены, что хотите выйти из навыка?",
+    tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/a6ded371-a761-472b-a9cb-6893e54f987a.opus'>"
+)
+
 CONTINUE_ANSWER = (
     Text(
         src="Хочешь продолжить игру ?",
@@ -106,10 +114,12 @@ START_ANSWER = Text(
         """Но вот главный вопрос: поможешь ли ты мне отгадывать страны? Если ты готов отправиться в это увлекательное путешествие, ответь, пожалуйста, "да".\n""",
         "С любовью, твой дедушка ♥"
     ]),
-    tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/eaa6b706-93b4-4fed-a520-1f4278b04674.opus'>"
-        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/6fe073a9-6c6a-4733-8ac6-5474e6799876.opus'>"
-        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/875e4355-8bb7-4091-95b4-83c117aca343.opus'>"
-        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/7a01c488-39bc-44ee-93db-ca4a0524fa8c.opus'>"
+    tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/6c5352bf-11ac-422c-ab34-316cf9ab5703.opus'>"  # ВКЛ Рация
+        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/a8f5c513-ec2b-4349-9777-477f0adb86fc.opus'>"  # Звуки Рация
+        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/eaa6b706-93b4-4fed-a520-1f4278b04674.opus'>"  #
+        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/6fe073a9-6c6a-4733-8ac6-5474e6799876.opus'>"  #
+        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/875e4355-8bb7-4091-95b4-83c117aca343.opus'>"  #
+        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/7a01c488-39bc-44ee-93db-ca4a0524fa8c.opus'>"  # With ♥
 )
 
 CLOSE_GAME_ANSWER = Text(
@@ -367,4 +377,19 @@ ERROR_ANSWERS = (
         src="Извини, у меня плохой сигнал и я тебя плохо слышу. Пожалуйста, повтори своё последнее предложение.",
         tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/5835b488-740b-4bd1-b34a-655b8baa91e3.opus'>"
     )
+)
+
+TRUE_END_ANSWER = Text(
+    src="Поздравляю тебя! На этом мои вопросы закончились! "
+        "Мы побывали с тобой в удивительных странах, узнали много нового и проверили старые знания. "
+        "Отведали необычные национальные блюда, смотрели на уникальные произведения искусства и много того, "
+        "что я никогда не забуду! Спасибо за столь увлекательное путешествие и твою помощь!",
+    tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/2a05175a-8040-46ad-a932-e052b0d2ba7e.opus'>"
+)
+
+END_ANSWER = Text(
+    src="Понимаю, что у тебя свои дела и обязанности, я очень ценю всю предоставленную мне помощь.\n"
+        "Не переживай, я продолжу мое увлекательное путешествие и поделюсь новостями, когда ты вернёшься.",
+    tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/f403dbab-44ca-45e1-a276-a5a74cfcbc25.opus'>sil <[150]>"
+        "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/8589bcdf-9ac9-4282-9215-7473cd1cfbdd.opus'>"
 )

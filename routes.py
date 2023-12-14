@@ -19,16 +19,20 @@ from const import (
     CONFIRM_BUTTONS_GROUP,
     MENU_BUTTONS_GROUP,
     ALL_HINTS_IS_TAKES,
+    FALSE_ANSWER_SOUND,
     GAME_BUTTONS_GROUP,
+    TRUE_ANSWER_SOUND,
     INCORRECT_ANSWERS,
     SHOW_CARDS_ANSWER,
     CLOSE_GAME_ANSWER,
+    TRUE_END_ANSWER,
     CONTINUE_ANSWER,
     HINT_DONT_NEED,
     REPEAT_PLEASE,
     ERROR_ANSWERS,
     START_ANSWER,
     HELP_ANSWER,
+    END_ANSWER, CONFIRM_EXIT_ANSWER,
 )
 import repositories
 import filters
@@ -69,7 +73,7 @@ async def handler_start(alice: AliceRequest, state: State, **kwargs):
     state="*"
 )
 @mixin_appmetrica_log(dp)
-async def handler_new_game(alice: AliceRequest, **kwargs):
+async def handler_something(alice: AliceRequest, **kwargs):
     return alice.response(
         "ЧТО-ТО",
         tts="""
@@ -85,20 +89,6 @@ async def handler_new_game(alice: AliceRequest, **kwargs):
         Скажи, да, если согласен !
         """
     )
-
-
-@dp.request_handler(
-    filters.SessionState(GameStates.END),
-    filters.OneOfFilter(
-        filters.ConfirmFilter(),
-        filters.TextContainFilter(["Новая", "игра"]),
-        filters.TextContainFilter(["сначала"]),
-    ),
-    state="*"
-)
-@mixin_appmetrica_log(dp)
-async def handler_new_game(alice: AliceRequest, **kwargs):
-    return await handler_show_cards(alice)
 
 
 @dp.request_handler(
@@ -122,6 +112,38 @@ async def handler_close_game(alice: AliceRequest, text: schemes.Text = schemes.T
 
 
 @dp.request_handler(
+    filters.SessionState(GameStates.CONFIRM_END),
+    filters.ConfirmFilter(),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_state
+async def handler_confirm_end(alice: AliceRequest, state: State, **kwargs):
+    await dp.storage.set_state(
+        alice.session.user_id,
+        state=GameStates.END,
+        alice_state=state
+    )
+    return await handler_end(alice, state=state)
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.CONFIRM_END),
+    filters.RejectFilter(),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_state
+async def handler_reject_end(alice: AliceRequest, state: State, **kwargs):
+    await dp.storage.set_state(
+        alice.session.user_id,
+        state=state.previous,
+        alice_state=state
+    )
+    return await handler_repeat(alice, state=state)
+
+
+@dp.request_handler(
     filters.OneOfFilter(
         filters.EndFilter(),
         filters.AndFilter(
@@ -132,22 +154,46 @@ async def handler_close_game(alice: AliceRequest, text: schemes.Text = schemes.T
     state="*"
 )
 @mixin_appmetrica_log(dp)
+@mixin_state
+async def handler_dialog_end(alice: AliceRequest, state: State, **kwargs):
+    if state.current == GameStates.START:
+        return await handler_close_game(alice, state=state)
+
+    await dp.storage.set_state(
+        alice.session.user_id,
+        state=GameStates.CONFIRM_END,
+        alice_state=state
+    )
+
+    answer = CONFIRM_EXIT_ANSWER
+    return alice.response(
+        answer.src,
+        tts=answer.tts,
+        buttons=CONFIRM_BUTTONS_GROUP
+    )
+
+
+@dp.request_handler(
+    filters.SessionState(GameStates.END),
+    filters.OneOfFilter(
+        filters.ConfirmFilter(),
+        filters.TextContainFilter(["Новая", "игра"]),
+        filters.TextContainFilter(["сначала"]),
+    ),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+async def handler_new_game(alice: AliceRequest, **kwargs):
+    return await handler_show_cards(alice)
+
+
+@mixin_appmetrica_log(dp)
 @mixin_can_repeat(dp)
 @mixin_state
 async def handler_end(alice: AliceRequest, state: State = None, true_end: bool = False, **kwargs):
     logging.info(f"User: {alice.session.user_id}: Handler->Заключение")
 
-    if true_end:
-        text = schemes.Text(
-            src="Поздравляем, ты отгадали все страны, где мы побывали 🎉"
-        )
-    else:
-        text = schemes.Text(
-            src="Понимаю, что у тебя свои дела и обязанности, я очень ценю всю предоставленную мне помощь.\n"
-                "Не переживай, я продолжу мое увлекательное путешествие и поделюсь новостями, когда ты вернёшься.",
-            tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/f403dbab-44ca-45e1-a276-a5a74cfcbc25.opus'>sil <[150]>"
-                "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/8589bcdf-9ac9-4282-9215-7473cd1cfbdd.opus'>"
-        )
+    text = TRUE_END_ANSWER if true_end else END_ANSWER
 
     if state.current == GameStates.START:
         return await handler_close_game(alice, text=text)
@@ -168,7 +214,6 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
         GameStates.END,
         alice_state=state
     )
-
     return alice.response(
         text.src + alice_answer,
         tts=text.tts + alice_answer,
@@ -658,7 +703,7 @@ async def handler_true_answer(alice: AliceRequest, state: State, **kwargs):
 
     return alice.response(
         answer.src,
-        tts=answer.tts,
+        tts=TRUE_ANSWER_SOUND + answer.tts,
         buttons=CONFIRM_BUTTONS_GROUP
     )
 
@@ -674,7 +719,7 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
         answer = choice(INCORRECT_ANSWERS)
         return alice.response(
             answer.src,
-            tts=answer.tts,
+            tts=FALSE_ANSWER_SOUND + answer.tts,
             buttons=GAME_BUTTONS_GROUP
         )
 
@@ -695,7 +740,7 @@ async def handler_false_answer(alice: AliceRequest, state: State, **kwargs):
 
     return alice.response(
         answer.src,
-        tts=answer.tts,
+        tts=FALSE_ANSWER_SOUND + answer.tts,
         buttons=CONFIRM_BUTTONS_GROUP
     )
 

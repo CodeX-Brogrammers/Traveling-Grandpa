@@ -20,6 +20,7 @@ class SessionState(BaseModel):
     try_count: int = 0
     need_hint: bool = Field(default=False)
     need_repeat: bool = Field(default=False)
+    previous_state: str = "*"
     state: str = "*"
 
 
@@ -39,6 +40,10 @@ class State(BaseModel):
     @property
     def current(self) -> str:
         return self.session.state
+
+    @property
+    def previous(self) -> str:
+        return self.session.previous_state
     
     def clear_after_question(self) -> None:
         self.session.latest_hints = []
@@ -56,6 +61,7 @@ class GameStates(Helper):
     GUESS_ANSWER = Item()  # Выбор ответов
     FACT = Item()  # Выбор ответов
     HINT = Item()  # Подсказка
+    CONFIRM_END = Item()  # Подтвердить завершение
     END = Item()  # Завершение
 
 
@@ -118,4 +124,6 @@ class HybridStorage(MemoryStorage):
     async def set_state(self, user_id, state: str, alice_state: State = None):
         if alice_state is None:
             return super().set_state(user_id, state)
+
+        alice_state.session.previous_state = alice_state.session.state
         alice_state.session.state = state
