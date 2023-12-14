@@ -153,10 +153,10 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
     global_score = await repositories.UserRepository.increase_global_score(user)
     rank = await repositories.UserRepository.get_rank(user)
 
-    text.src += f"\nЗа игру вы заработали {score} очков." \
-                f"\nОбщее количество очков: {global_score}." \
-                f"\nВы занимаете {rank} место в рейтинге." \
-                "\nЖелаете начать заново?"
+    alice_answer = f"\nЗа игру вы заработали {score} очков." \
+                   f"\nОбщее количество очков: {global_score}." \
+                   f"\nВы занимаете {rank} место в рейтинге." \
+                   "\nЖелаете начать заново?"
 
     state.clear_after_question()
     await dp.storage.set_state(
@@ -166,8 +166,8 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
     )
 
     return alice.response(
-        text.src,
-        tts=text.tts,
+        text.src + alice_answer,
+        tts=text.tts + alice_answer,
         buttons=NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
         session_state=state.session.model_dump()
     )
