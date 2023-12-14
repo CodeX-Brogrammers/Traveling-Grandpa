@@ -688,7 +688,7 @@ async def handler_fact_confirm(alice: AliceRequest, state: State, **kwargs):
     fact: schemes.Text = choice(country.facts)
     continue_answer = choice(CONTINUE_ANSWER)
     return alice.response(
-        "\n".join([fact.src, continue_answer.src]),
+        "\n\n".join([fact.src, continue_answer.src]),
         tts=fact.tts + continue_answer.tts,
         buttons=CONFIRM_BUTTONS_GROUP
     )
