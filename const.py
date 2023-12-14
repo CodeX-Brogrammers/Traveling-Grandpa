@@ -117,20 +117,12 @@ INCORRECT_ANSWERS = (
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/2d8ce0d3-b792-462e-ab82-1bc9e4353655.opus">'
     ),
     Text(
-        src='Ой, ты ошибся. Но ты можешь взять подсказку. Используешь её?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/c41e2378-8868-4282-8f11-b73622ced095.opus">'
-    ),
-    Text(
         src='Нет, это не верно. Давай я дам тебе подсказку, может так получится отгадать?',
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/0e369fb8-edaa-4731-8234-5fbd0921e296.opus">'
     ),
     Text(
         src='Нет, это не верно. Думаю подсказка поможет, хочешь использовать её?',
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/588f3ef0-cc86-4b8c-8993-c0363d243dd0.opus">'
-    ),
-    Text(
-        src='К сожалению, я имел ввиду другую страну. Давай я тебе подскажу?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/977b6663-308f-40d9-9082-eb32ac0ee439.opus">'
     ),
     Text(
         src='К сожалению, это неверно. Но не расстраивайся, всё еще может получится. Хочешь подсказку?',
