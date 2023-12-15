@@ -340,12 +340,6 @@ async def handler_help(alice: AliceRequest, state: State, **kwargs):
             ])
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
 
-        case GameStates.CONFIRM_END:
-            answer.extend([
-                HELP_ANSWER["continue_or_close_game"]
-            ])
-            buttons.extend(CONFIRM_BUTTONS_GROUP)
-
         case GameStates.END:
             answer.extend([
                 HELP_ANSWER["restart"],
@@ -363,7 +357,7 @@ async def handler_help(alice: AliceRequest, state: State, **kwargs):
             answer += "Согласиться или отказаться от интересного факта"
             buttons.extend(CONFIRM_BUTTONS_GROUP)
 
-        case GameStates.SHOW_CARDS:
+        case GameStates.SHOW_CARDS | GameStates.CONFIRM_END:
             answer.extend([
                 HELP_ANSWER["continue_or_close_game"]
             ])
