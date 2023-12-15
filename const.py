@@ -130,10 +130,6 @@ CLOSE_GAME_ANSWER = Text(
 
 INCORRECT_ANSWERS = (
     Text(
-        src='Упс, это не совсем верно. Возможно, маленькая подсказка поможет тебе разгадать эту загадку. Готов принять её?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/d5cca055-bc47-4aee-901d-b7f054322e63.opus">'
-    ),
-    Text(
         src='К сожалению, это не правильный ответ. Может быть, стоит воспользоваться подсказкой?',
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/37f7cabc-3add-4f63-a6ae-30899ddf2184.opus">'
     ),
@@ -150,28 +146,12 @@ INCORRECT_ANSWERS = (
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/01748ba6-5d88-4b77-8e5d-74b495c40c35.opus">'
     ),
     Text(
-        src='Увы, это не так. Возможно, тебе поможет подсказка. Хочешь её воспользоваться?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/4689f107-2811-46e0-b53a-8bbedbee90e6.opus">'
-    ),
-    Text(
-        src='Нет, это неправильно. Думаю подсказка поможет, хочешь использовать её?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/e8f9cceb-2131-42a8-97dc-291d9b34f061.opus">'
-    ),
-    Text(
         src='Это неправильно. Но думаю если мы возьмём подсказку, то всё получится. Берём?',
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/d83d71b4-068d-422f-bc97-7dc29dc130d3.opus">'
     ),
     Text(
-        src='Нет, это не совсем верно. Но думаю подсказка нам бы помогла, давай её возьмём?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/763a5824-deb1-4476-b0f7-5ca94552fff4.opus">'
-    ),
-    Text(
         src='К сожалению, это неверно. Попробуй еще раз. Я могу предложить тебе подсказку, хочешь ею воспользоваться?',
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/4e211cfe-5ec5-46da-b11a-2808fb6885c3.opus">'
-    ),
-    Text(
-        src='Хм, не совсем верно. Подсказка может быть полезной. Желаешь ли использовать её?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/fd09f841-7b45-4267-93fd-a4f1bb8860ce.opus">'
     ),
     Text(
         src='К сожалению, это неверно. Давай попробуем взять подсказку?',
@@ -186,16 +166,8 @@ INCORRECT_ANSWERS = (
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/e1cb4034-aa0c-4e6f-b69f-086eb935d214.opus">'
     ),
     Text(
-        src='Нет, это неправильный ответ. Я могу дать тебе подсказку. Хочешь её взять?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/2d8ce0d3-b792-462e-ab82-1bc9e4353655.opus">'
-    ),
-    Text(
         src='Нет, это не верно. Давай я дам тебе подсказку, может так получится отгадать?',
         tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/0e369fb8-edaa-4731-8234-5fbd0921e296.opus">'
-    ),
-    Text(
-        src='Нет, это не верно. Думаю подсказка поможет, хочешь использовать её?',
-        tts='<speaker audio="dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/588f3ef0-cc86-4b8c-8993-c0363d243dd0.opus">'
     ),
     Text(
         src='К сожалению, это неверно. Но не расстраивайся, всё еще может получится. Хочешь подсказку?',
