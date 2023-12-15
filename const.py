@@ -334,6 +334,13 @@ CONTINUE_ANYTHING_ELSE_MOMENT = (
     ),
 )
 
+CONFIRM_END_ANYTHING_ELSE_MOMENT = (
+    Text(
+        src="Не совсем понял, что ты говоришь. Ты точно хочешь выйти?",
+        tts="<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/25722742-c2e5-4f8c-a6c3-855e4539b7b5.opus'>"
+    ),
+)
+
 ALL_HINTS_IS_TAKES = (
     Text(
         src="Извини, ты получил все подсказки об этой стране. Повторю их ещё раз.",

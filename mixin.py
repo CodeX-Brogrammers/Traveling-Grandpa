@@ -52,8 +52,8 @@ def mixin_state(func: Callable):
         else:
             response = data
 
-        response.session_state = response.session_state | state.session.dict()
-        response.user_state_update = response.user_state_update | state.user.dict()
+        response.session_state = response.session_state | state.session.model_dump()
+        response.user_state_update = response.user_state_update | state.user.model_dump()
         response.application_state = response.application_state | state.application
         if isinstance(data, AliceResponse):
             return response

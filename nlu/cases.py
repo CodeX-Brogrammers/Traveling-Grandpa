@@ -30,10 +30,7 @@ def _calculate_correct_answer(
     result = []
     normalized_user_answer = set(nlu.lemmatize(nlu.tokenizer(user_answer)))
     for answer in answers:
-        if by_number and answer.number != 0:
-            normalized_answer = set(str(answer.number))
-        else:
-            normalized_answer = set(answer.clean)
+        normalized_answer = set(str(answer.number)) if by_number and answer.number != 0 else set(answer.clean)
 
         coincidence = nlu.calculate_coincidence(normalized_user_answer, normalized_answer)
         if coincidence >= threshold:

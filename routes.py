@@ -11,12 +11,14 @@ from schemes import RepeatKey, Diff
 from const import (
     DONT_KNOW, FACT_ANYTHING_ELSE_MOMENT,
     SELECT_CARD_ANYTHING_ELSE_MOMENT,
+    CONFIRM_END_ANYTHING_ELSE_MOMENT,
     NEW_OR_CLOSE_GAME_BUTTONS_GROUP,
     REPEAT_OR_CLOSE_BUTTONS_GROUP,
     CONTINUE_ANYTHING_ELSE_MOMENT,
     ANTI_BRUTE_FORCE_ANSWERS,
     END_ANYTHING_ELSE_MOMENT,
     CONFIRM_BUTTONS_GROUP,
+    CONFIRM_EXIT_ANSWER,
     MENU_BUTTONS_GROUP,
     ALL_HINTS_IS_TAKES,
     FALSE_ANSWER_SOUND,
@@ -32,7 +34,7 @@ from const import (
     ERROR_ANSWERS,
     START_ANSWER,
     HELP_ANSWER,
-    END_ANSWER, CONFIRM_EXIT_ANSWER,
+    END_ANSWER,
 )
 import repositories
 import filters
@@ -820,9 +822,9 @@ async def handler_all(alice: AliceRequest, state: State):
             answer = choice(answers)
             buttons.extend(REPEAT_OR_CLOSE_BUTTONS_GROUP)
 
-        # case GameStates.CONFIRM_END:
-        #     answer = choice(CONFIRM_END_ANYTHING_ELSE_MOMENT)
-        #     buttons.extend(CONFIRM_BUTTONS_GROUP)
+        case GameStates.CONFIRM_END:
+            answer = choice(CONFIRM_END_ANYTHING_ELSE_MOMENT)
+            buttons.extend(CONFIRM_BUTTONS_GROUP)
 
         case GameStates.END:
             answer = choice(END_ANYTHING_ELSE_MOMENT)

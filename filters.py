@@ -6,12 +6,6 @@ from aioalice.types import AliceRequest
 import nlu
 
 
-class StateType(enum.Enum):
-    SESSION = "session"
-    USER = "user"
-    APPLICATION = "application"
-
-
 def _check_included_intent_names(alice: AliceRequest, intent_names: list[str]):
     intents: dict = alice.request.nlu._raw_kwargs["intents"]
     return any([intent_name in intents.keys() for intent_name in intent_names])
