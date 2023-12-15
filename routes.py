@@ -547,24 +547,6 @@ async def handler_skip_question(alice: AliceRequest, *args, **kwargs):
 
 
 @dp.request_handler(
-    filters.DontKnowFilter(),
-    filters.SessionState(GameStates.GUESS_ANSWER),
-    state="*"
-)
-@mixin_appmetrica_log(dp)
-@mixin_can_repeat(dp)
-@mixin_state
-async def handler_dont_know_answer(alice: AliceRequest, state: State, **kwargs):
-    state.session.need_hint = True
-    text = choice(DONT_KNOW)
-    return alice.response(
-        text.src,
-        tts=text.tts,
-        buttons=GAME_BUTTONS_GROUP
-    )
-
-
-@dp.request_handler(
     filters.HintNeedFilter(),
     filters.SessionState(GameStates.GUESS_ANSWER),
     state="*"
@@ -610,6 +592,24 @@ async def handler_hint(alice: AliceRequest, state: State, **kwargs):
     return alice.response(
         hint.text.src,
         tts=hint.text.tts,
+        buttons=GAME_BUTTONS_GROUP
+    )
+
+
+@dp.request_handler(
+    filters.DontKnowFilter(),
+    filters.SessionState(GameStates.GUESS_ANSWER),
+    state="*"
+)
+@mixin_appmetrica_log(dp)
+@mixin_can_repeat(dp)
+@mixin_state
+async def handler_dont_know_answer(alice: AliceRequest, state: State, **kwargs):
+    state.session.need_hint = True
+    text = choice(DONT_KNOW)
+    return alice.response(
+        text.src,
+        tts=text.tts,
         buttons=GAME_BUTTONS_GROUP
     )
 
