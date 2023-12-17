@@ -17,6 +17,10 @@ NEXT_BUTTON = Button('Следующий вопрос')
 NEW_GAME_BUTTON_MENU = Button('Новая игра', hide=False)
 CLOSE_BUTTON = Button('Выход')
 CLOSE_BUTTON_MENU = Button('Выход', hide=False)
+REVIEW_BUTTON = Button(
+    "Оценить и оставить отзыв о игре",
+    url="https://dialogs.yandex.ru/store/skills/5faa86a8-otgadaj-stranu-s-dedushko"
+)
 
 MENU_BUTTONS_GROUP = [
     GO_BUTTON_MENU,
@@ -26,7 +30,7 @@ MENU_BUTTONS_GROUP = [
 ]
 GAME_BUTTONS_GROUP = [HINT_BUTTON, REPEAT_BUTTON, NEXT_BUTTON, HELP_BUTTON, CLOSE_BUTTON]
 CONFIRM_BUTTONS_GROUP = [OK_BUTTON, REJECT_BUTTON]
-NEW_OR_CLOSE_GAME_BUTTONS_GROUP = [NEW_GAME_BUTTON_MENU, CLOSE_BUTTON_MENU]
+NEW_OR_CLOSE_GAME_BUTTONS_GROUP = [NEW_GAME_BUTTON_MENU, CLOSE_BUTTON_MENU, REVIEW_BUTTON]
 REPEAT_OR_CLOSE_BUTTONS_GROUP = [REPEAT_BUTTON, CLOSE_BUTTON]
 
 TRUE_ANSWER_SOUND = "<speaker audio='dialogs-upload/69d87e76-1810-408c-8de1-4951ad218fa6/506b8f87-b86f-4e92-ade2-b2a326d1a585.opus'>"

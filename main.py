@@ -22,7 +22,8 @@ def prepare_app():
         middleware.only_post_request_middleware,
         middleware.ping_request_middleware,
         middleware.log_middleware,
-        middleware.session_state_middleware
+        middleware.session_state_middleware,
+        middleware.answers_collector_middleware
     ))
     return app
 

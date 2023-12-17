@@ -60,19 +60,56 @@ class CountryRepository:
         )
 
     @staticmethod
-    async def random(card_type: models.CardType,
-                     passed_cards: list[PydanticObjectId]) -> models.CountryShortView | None:
+    async def random(card_type: models.CardType) -> models.CountryShortView | None:
         country = await models.Country.aggregate([
             {
-                "$unwind": "$cards"
-            },
-            {
-                "$match": {
-                    "_id": {"$nin": passed_cards},
-                    "cards.type": card_type.value
+                '$lookup': {
+                    'from': 'UserData',
+                    'pipeline': [
+                        {
+                            '$match': {
+                                'user_id': 'test'
+                            }
+                        },
+                        {
+                            '$project': {
+                                '_id': 0,
+                                f'passed_cards.{card_type.name.lower()}': 1
+                            }
+                        }
+                    ],
+                    'as': 'user'
                 }
             },
-            {"$sample": {"size": 1}}
+            {
+                '$unwind': '$user'
+            },
+            {
+                '$set': {
+                    'passed_cards': f'$user.passed_cards.{card_type.name.lower()}'
+                }
+            },
+            {
+                '$unwind': '$cards'
+            },
+            {
+                '$match': {
+                    '$expr': {
+                        '$not': {
+                            '$in': [
+                                '$_id',
+                                '$passed_cards'
+                            ]
+                        }
+                    },
+                    'cards.type': f'{card_type.value}'
+                }
+            },
+            {
+                '$sample': {
+                    'size': 1
+                }
+            }
         ], projection_model=models.CountryShortView).to_list()
         if country:
             return country[0]
@@ -122,22 +159,6 @@ class UserRepository:
         return user_data
 
     @classmethod
-    async def get_passed_cards(
-            cls,
-            user: models.UserData,
-            card_type: models.CardType
-    ) -> list[PydanticObjectId]:
-        card_type_map = {
-            models.CardType.ATTRACTIONS: user.passed_cards.attractions,
-            models.CardType.NATIONAL_DISHES: user.passed_cards.national_dishes,
-            models.CardType.CULTURAL_FEATURES: user.passed_cards.cultural_features,
-            models.CardType.FACTS: user.passed_cards.facts,
-            models.CardType.CREATIVITY: user.passed_cards.creativity
-        }
-        cards = card_type_map[card_type]
-        return [PydanticObjectId(card) for card in cards]
-
-    @classmethod
     async def get_passed_cards_count(
             cls,
             user: models.UserData
@@ -158,11 +179,15 @@ class UserRepository:
             cls,
             user: models.UserData
     ) -> None:
-        user.passed_cards.attractions = set()
-        user.passed_cards.national_dishes = set()
-        user.passed_cards.cultural_features = set()
-        user.passed_cards.facts = set()
-        user.passed_cards.creativity = set()
+        await user.update({
+            "$set": {
+                models.UserData.passed_cards.attractions: [],
+                models.UserData.passed_cards.national_dishes: [],
+                models.UserData.passed_cards.cultural_features: [],
+                models.UserData.passed_cards.facts: [],
+                models.UserData.passed_cards.creativity: [],
+            }
+        })
         await user.save()
 
     @classmethod
@@ -172,20 +197,27 @@ class UserRepository:
             country_id: str | PydanticObjectId,
             card_type: models.CardType
     ) -> None:
-        if isinstance(country_id, PydanticObjectId):
-            country_id = str(country_id)
+        if isinstance(country_id, str):
+            country_id = PydanticObjectId(country_id)
 
         card_type_map = {
-            models.CardType.ATTRACTIONS: user.passed_cards.attractions,
-            models.CardType.NATIONAL_DISHES: user.passed_cards.national_dishes,
-            models.CardType.CULTURAL_FEATURES: user.passed_cards.cultural_features,
-            models.CardType.FACTS: user.passed_cards.facts,
-            models.CardType.CREATIVITY: user.passed_cards.creativity
+            models.CardType.ATTRACTIONS: models.UserData.passed_cards.attractions,
+            models.CardType.NATIONAL_DISHES: models.UserData.passed_cards.national_dishes,
+            models.CardType.CULTURAL_FEATURES: models.UserData.passed_cards.cultural_features,
+            models.CardType.FACTS: models.UserData.passed_cards.facts,
+            models.CardType.CREATIVITY: models.UserData.passed_cards.creativity
         }
         card = card_type_map[card_type]
-        card.add(country_id)
 
-        await user.save()
+        exists = await user.find_one({
+            card: country_id
+        })
+        if exists:
+            return
+
+        await user.update({
+            "$push": {card: country_id}
+        })
 
     @classmethod
     async def increase_score(
@@ -193,9 +225,9 @@ class UserRepository:
             user: models.UserData,
             number: int
     ) -> int:
-        user.score += number
-        await user.save()
-
+        await user.inc({
+            models.UserData.score: number
+        })
         return user.score
 
     @classmethod
@@ -203,9 +235,14 @@ class UserRepository:
             cls,
             user: models.UserData
     ) -> int:
-        user.global_score += user.score
-        user.score = 0
-        await user.save()
+        await user.update({
+            "$inc": {
+                models.UserData.global_score: user.score
+            },
+            "$set": {
+                models.UserData.score: 0
+            }
+        })
 
         return user.global_score
 
@@ -338,6 +375,25 @@ class CardRepository:
         return result
 
 
+class AnswersCollectorRepository:
+    @staticmethod
+    async def add(current_state: str | None, previous_state: str | None, answer: str) -> None:
+        collector = await models.AnswersCollector.find_one({
+            "current_state": current_state,
+            "previous_state": previous_state
+        })
+        if not collector:
+            collector = await models.AnswersCollector(
+                current_state=current_state,
+                previous_state=previous_state
+            ).save()
+
+        await collector.inc({
+            models.AnswersCollector.answers[answer]: 1
+        })
+        return collector
+
+
 if __name__ == '__main__':
     # aggregate
     # sort by score asc
@@ -349,13 +405,22 @@ if __name__ == '__main__':
     async def test():
         await models.init_database()
 
-        # user_id = "0949EEBA2D0E3A59ED6052A46EFC046E6CD43719F826539F1137AED6A7383B09"
-        # user = await UserRepository.get(user_id)
+        user_id = "0949EEBA2D0E3A59ED6052A46EFC046E6CD43719F826539F1137AED6A7383B09"
+        user = await UserRepository.get(user_id)
+        # print(user)
+        # await UserRepository.increase_score(user, 5)
+        # # print(score)
+        # await UserRepository.increase_global_score(user)
+        await UserRepository.add_passed_country_card(user, "some12", models.CardType.FACTS)
+        await UserRepository.clear_passed_cards(user)
+        await UserRepository.add_passed_country_card(user, "some12", models.CardType.FACTS)
         # cards = await CardRepository.get(user)
         # answers = CardRepository.calculate_answers_with_index(cards)
         # print(answers)
-        names = await CountryRepository.get_countries_names()
-        print(names)
+        # names = await CountryRepository.get_countries_names()
+        # print(names)
+        # collector = await AnswersCollectorRepository.add("fact", "guess_answer", "DA")
+        # print(collector)
         # rank = await UserRepository.get_rank(user)
         # print(rank)
 

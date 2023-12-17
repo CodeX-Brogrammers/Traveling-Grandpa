@@ -78,11 +78,11 @@ class CountryHints(BaseModel):
 
 
 class PassedCard(BaseModel):
-    attractions: set[str] = Field(default_factory=set)
-    national_dishes: set[str] = Field(default_factory=set)
-    cultural_features: set[str] = Field(default_factory=set)
-    facts: set[str] = Field(default_factory=set)
-    creativity: set[str] = Field(default_factory=set)
+    attractions: list[PydanticObjectId] = Field(default_factory=list)
+    national_dishes: list[PydanticObjectId] = Field(default_factory=list)
+    cultural_features: list[PydanticObjectId] = Field(default_factory=list)
+    facts: list[PydanticObjectId] = Field(default_factory=list)
+    creativity: list[PydanticObjectId] = Field(default_factory=list)
 
 
 class UserData(Document):
@@ -92,6 +92,12 @@ class UserData(Document):
     global_score: int = Field(default=0)
 
 
+class AnswersCollector(Document):
+    current_state: str | None = Field(...)
+    previous_state: str | None = Field(...)
+    answers: dict = Field(default_factory=dict)
+
+
 async def init_database(*_):
     client = AsyncIOMotorClient(settings.mongodb_url)
-    await init_beanie(database=client["QUEST"], document_models=[UserData, Country])
+    await init_beanie(database=client["QUEST"], document_models=[UserData, Country, AnswersCollector])

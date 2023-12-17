@@ -233,7 +233,13 @@ async def handler_end(alice: AliceRequest, state: State = None, true_end: bool =
 
 # Обработчик повторения последней команды
 @dp.request_handler(
-    filters.RepeatFilter(),
+    filters.OneOfFilter(
+        filters.RepeatFilter(),
+        filters.AndFilter(
+            filters.TextContainFilter("Оценить и оставить отзыв о игре".split()),
+            filters.SessionState(GameStates.END)
+        )
+    ),
     state="*"
 )
 @mixin_appmetrica_log(dp)
@@ -302,6 +308,9 @@ async def handler_can_do(alice: AliceRequest, state: State, **kwargs):
 
         case GameStates.SHOW_CARDS:
             buttons.extend(CONFIRM_BUTTONS_GROUP)
+
+        case GameStates.GUESS_ANSWER:
+            buttons.extend(GAME_BUTTONS_GROUP)
 
         case _:
             buttons.extend(MENU_BUTTONS_GROUP)
@@ -490,12 +499,9 @@ async def handler_question(alice: AliceRequest, state: State, **kwargs):
 
     selected_card = state.session.selected_card
     user = await repositories.UserRepository.get(alice.session.user_id)
-    passed_cards = await repositories.UserRepository.get_passed_cards(
-        user, selected_card
-    )
+
     country = await repositories.CountryRepository.random(
-        card_type=selected_card,
-        passed_cards=passed_cards
+        card_type=selected_card
     )
 
     if country is None:
@@ -819,6 +825,10 @@ async def handler_all(alice: AliceRequest, state: State):
         case GameStates.CONFIRM_END:
             answer = choice(CONFIRM_END_ANYTHING_ELSE_MOMENT)
             buttons.extend(CONFIRM_BUTTONS_GROUP)
+
+        case GameStates.END, alice.request.command:
+            answer = choice(END_ANYTHING_ELSE_MOMENT)
+            buttons.extend(NEW_OR_CLOSE_GAME_BUTTONS_GROUP)
 
         case GameStates.END:
             answer = choice(END_ANYTHING_ELSE_MOMENT)

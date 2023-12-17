@@ -5,6 +5,7 @@ from aiohttp.web_response import Response
 from aiohttp.web_request import Request
 from aiohttp import web
 
+from repositories import AnswersCollectorRepository
 from state import SessionState
 
 
@@ -51,7 +52,7 @@ async def session_state_middleware(request, handler):
     if not data:
         return response
 
-    state = SessionState.parse_obj(data).dict()
+    state = SessionState(**data).model_dump()
     body = json.loads(response.body)
     body_state = body.get("session_state", {})
     if isinstance(state, dict) and isinstance(body_state, dict):
@@ -61,3 +62,27 @@ async def session_state_middleware(request, handler):
 
     response.body = json.dumps(body)
     return response
+
+
+@web.middleware
+async def answers_collector_middleware(request: Request, handler):
+    data = await request.json()
+
+    session = data.get("state", {}).get("session", {})
+    current_state = session.get("state", None)
+    previous_state = session.get("previous_state", None)
+
+    request_obj = data.get("request", {})
+    answer = request_obj.get("command", None)
+
+    if answer:
+        try:
+            await AnswersCollectorRepository.add(
+                current_state=current_state,
+                previous_state=previous_state,
+                answer=answer
+            )
+        finally:
+            pass
+
+    return await handler(request)
