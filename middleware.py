@@ -82,7 +82,7 @@ async def answers_collector_middleware(request: Request, handler):
                 previous_state=previous_state,
                 answer=answer
             )
-        finally:
-            pass
+        except Exception as ex:
+            logging.error(str(ex))
 
     return await handler(request)

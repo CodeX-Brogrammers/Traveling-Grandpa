@@ -501,6 +501,7 @@ async def handler_question(alice: AliceRequest, state: State, **kwargs):
     user = await repositories.UserRepository.get(alice.session.user_id)
 
     country = await repositories.CountryRepository.random(
+        user=user,
         card_type=selected_card
     )
 

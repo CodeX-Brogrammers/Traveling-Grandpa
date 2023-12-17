@@ -60,7 +60,7 @@ class CountryRepository:
         )
 
     @staticmethod
-    async def random(card_type: models.CardType) -> models.CountryShortView | None:
+    async def random(user: models.UserData, card_type: models.CardType) -> models.CountryShortView | None:
         country = await models.Country.aggregate([
             {
                 '$lookup': {
@@ -68,7 +68,7 @@ class CountryRepository:
                     'pipeline': [
                         {
                             '$match': {
-                                'user_id': 'test'
+                                'user_id': user.user_id
                             }
                         },
                         {
